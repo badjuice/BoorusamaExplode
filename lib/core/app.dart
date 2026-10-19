@@ -117,14 +117,13 @@ class BoorusamaCoreApp extends ConsumerWidget {
                           child: KurumiFocusRing(
                             child: AppTitleBar(
                               child: AppLockScope(
-                                child: Column(
+                                // The navigator must keep the same position in
+                                // the tree, otherwise every route is rebuilt
+                                // and loses its state when connectivity changes.
+                                child: Stack(
                                   children: [
+                                    child!,
                                     const NetworkUnavailableIndicatorWithState(),
-                                    Expanded(
-                                      child: NetworkUnavailableRemovePadding(
-                                        child: child!,
-                                      ),
-                                    ),
                                   ],
                                 ),
                               ),

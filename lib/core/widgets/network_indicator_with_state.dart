@@ -13,35 +13,23 @@ class NetworkUnavailableIndicatorWithState extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(networkStateProvider);
-
-    return switch (state) {
-      NetworkDisconnectedState _ => const NetworkUnavailableIndicator(),
-      _ => const SizedBox.shrink(),
-    };
-  }
-}
-
-class NetworkUnavailableRemovePadding extends ConsumerWidget {
-  const NetworkUnavailableRemovePadding({
-    required this.child,
-    super.key,
-  });
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
     final isNetworkUnavailable = ref.watch(
       networkStateProvider.select((state) => state is NetworkDisconnectedState),
     );
 
-    return isNetworkUnavailable
-        ? MediaQuery.removePadding(
-            context: context,
-            removeTop: true,
-            child: child,
-          )
-        : child;
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: MediaQuery.paddingOf(context).bottom + 72,
+      child: IgnorePointer(
+        child: AnimatedOpacity(
+          opacity: isNetworkUnavailable ? 1 : 0,
+          duration: const Duration(milliseconds: 200),
+          child: const Center(
+            child: NetworkUnavailableIndicator(),
+          ),
+        ),
+      ),
+    );
   }
 }

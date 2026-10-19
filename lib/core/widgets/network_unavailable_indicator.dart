@@ -17,33 +17,34 @@ class NetworkUnavailableIndicator extends StatelessWidget {
       liveRegion: true,
       excludeSemantics: true,
       child: Material(
-        color: colorScheme.surface,
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 8,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Symbols.wifi_off,
-                  size: 16,
-                  color: colorScheme.onSurface,
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 6),
-                  child: Text(
-                    message,
-                    style: TextStyle(
-                      color: colorScheme.onSurface,
-                      fontWeight: FontWeight.w500,
-                    ),
+        color: colorScheme.inverseSurface.withValues(alpha: 0.9),
+        shape: const StadiumBorder(),
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 6,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Symbols.wifi_off,
+                size: 14,
+                color: colorScheme.onInverseSurface,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: Text(
+                  message,
+                  style: TextStyle(
+                    color: colorScheme.onInverseSurface,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
