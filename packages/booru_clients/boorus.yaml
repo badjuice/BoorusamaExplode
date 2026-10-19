@@ -167,6 +167,13 @@
             parser: "parseRbPostHtml"
           tags:
             parser: "parseRbTagsHtml"
+          comments:
+            type: html
+            endpoint: "/index.php?page=post&s=view"
+            parser: "parseRbCommentsHtml"
+            user-params: {post-id: "id"}
+            capabilities:
+              pagination-type: "none"
 
       - url: https://bbooru.com/
         auth:

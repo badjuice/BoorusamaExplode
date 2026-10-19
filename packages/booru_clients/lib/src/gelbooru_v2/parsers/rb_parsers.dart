@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart' show parse;
 
+import '../../common/feature.dart';
 import '../../gelbooru/types/types.dart';
 import '../types.dart';
 
@@ -52,6 +53,65 @@ List<TagDto> _parseRbTagElements(List<Element> elements, int type) {
       ambiguous: null, // Not available
     );
   }).toList();
+}
+
+CommentPageDto parseRbCommentsHtml(
+  Response response,
+  Map<String, dynamic> context,
+) {
+  final html = response.data;
+  if (html is! String) return const CommentPageDto(comments: []);
+
+  final document = parse(html);
+  final postId = context[P.postId]?.toString();
+
+  final comments = document
+      .querySelectorAll('div.userComment')
+      .map((e) {
+        final id = RegExp(r'^c(\d+)$').firstMatch(e.id)?.group(1);
+        final children = e.children;
+        final creator = e.querySelector('a[href*="s=profile"]')?.text.trim();
+        final meta = children.length > 1 ? children[1].text : '';
+        final createdAt = RegExp(
+          r'Posted\s+on\s+(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})',
+        ).firstMatch(meta)?.group(1);
+        final score = int.tryParse(
+          e.querySelector('#sc$id')?.text.trim() ?? '',
+        );
+        final body = children.length > 2
+            ? _extractRbCommentBody(children[2])
+            : '';
+
+        return CommentDto(
+          id: id,
+          postId: postId,
+          creator: creator?.isNotEmpty == true ? creator : null,
+          createdAt: createdAt,
+          body: body,
+          score: score,
+        );
+      })
+      .where((c) => c.id != null);
+
+  return CommentPageDto(comments: comments.toList());
+}
+
+String _extractRbCommentBody(Element element) {
+  final buffer = StringBuffer();
+
+  void visit(Node node) {
+    switch (node) {
+      case Text(:final data):
+        buffer.write(data);
+      case Element(localName: 'br'):
+        buffer.write('\n');
+      default:
+        node.nodes.forEach(visit);
+    }
+  }
+
+  visit(element);
+  return buffer.toString().trim();
 }
 
 PostV2Dto? parseRbPostHtml(
@@ -239,19 +299,40 @@ GelbooruV2Posts parseRbPostsHtml(
       thumbUrl = 'https:$thumbUrl';
     }
 
-    final fileUrl = thumbUrl
-        .replaceFirst('thumbs', 'img')
-        .replaceFirst('thumbnails', 'images')
-        .replaceFirst('thumbnail_', '');
-
     final tags = imageElement.attributes['title'];
     final md5 = thumbUrl.substring(
       thumbUrl.lastIndexOf('_') + 1,
       thumbUrl.lastIndexOf('.'),
     );
 
-    // Parse tags for score and rating
-    final tagList = tags?.split(' ') ?? <String>[];
+    // Titles are "tag one, tag two"; older pages used space separated tags.
+    final tagList = switch (tags) {
+      final String t when t.contains(',') =>
+        t
+            .split(',')
+            .map((e) => e.trim().replaceAll(' ', '_'))
+            .where((e) => e.isNotEmpty)
+            .toList(),
+      final String t => t.split(' '),
+      null => <String>[],
+    };
+
+    // The real extension is only on the post page. Pick one that matches the
+    // media type so the grid can tell videos and gifs apart; downloads
+    // resolve the real url separately.
+    final style = imageElement.attributes['style'] ?? '';
+    final extension = switch (tagList) {
+      _ when style.contains('#0000ff') => 'mp4',
+      final t when t.any(_rbVideoTags.contains) => 'mp4',
+      final t when t.any(_rbGifTags.contains) => 'gif',
+      _ => 'jpg',
+    };
+
+    final fileUrl = thumbUrl
+        .replaceFirst('thumbs', 'img')
+        .replaceFirst('thumbnails', 'images')
+        .replaceFirst('thumbnail_', '')
+        .replaceFirst(RegExp(r'\.[a-zA-Z0-9]+$'), '.$extension');
     int? score;
     String? rating;
 
@@ -298,6 +379,9 @@ GelbooruV2Posts parseRbPostsHtml(
     count: estimatedCount ?? posts.length,
   );
 }
+
+const _rbVideoTags = {'webm', 'mp4', 'video', 'sound', 'has_audio'};
+const _rbGifTags = {'animated_gif', 'gif'};
 
 String? _parseLastPagePid(Document document) {
   final lastPageLink = document.querySelector('a[alt="last page"]');
