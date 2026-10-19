@@ -1,3 +1,6 @@
+// Dart imports:
+import 'dart:async';
+
 // Package imports:
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:i18n/i18n.dart';
@@ -19,6 +22,8 @@ import '../../../../posts/post/types.dart';
 import '../../../../router.dart';
 import '../../../../settings/types.dart';
 import '../../../filename/types.dart';
+import '../../../history/providers.dart';
+import '../../../history/types.dart';
 import '../../../sidecar/types.dart';
 import '../../../urls/types.dart';
 import '../types/download.dart';
@@ -66,6 +71,15 @@ class DownloadNotifier extends FamilyNotifier<void, DownloadNotifierParams> {
     String? overrideUrl,
     String? quality,
   }) async {
+    // Picking a quality from the menu is an explicit request to save again.
+    final isExplicit = overrideUrl != null || quality != null;
+    if (!isExplicit && await _isAlreadyDownloaded(post)) {
+      _showToast(
+        (context) => context.t.download.notification.already_downloaded,
+      );
+      return null;
+    }
+
     final perm = await _getPermissionStatus();
     final observer = arg.observer;
 
@@ -101,6 +115,22 @@ class DownloadNotifier extends FamilyNotifier<void, DownloadNotifierParams> {
       return;
     }
 
+    final newPosts = [
+      for (final post in posts)
+        if (!await _isAlreadyDownloaded(post)) post,
+    ];
+    final skipped = posts.length - newPosts.length;
+
+    if (skipped > 0) {
+      _showToast(
+        (context) => newPosts.isEmpty
+            ? context.t.download.notification.already_downloaded
+            : context.t.download.notification.skipped_already_downloaded
+                  .replaceAll('{count}', skipped.toString()),
+      );
+    }
+    if (newPosts.isEmpty) return;
+
     final perm = await _getPermissionStatus();
     final networkConstraint = await resolveDownloadNetworkConstraint(
       ref,
@@ -109,11 +139,11 @@ class DownloadNotifier extends FamilyNotifier<void, DownloadNotifierParams> {
     if (networkConstraint == null) return;
 
     arg.observer?.onBulkDownloadStart(
-      total: posts.length,
+      total: newPosts.length,
     );
 
-    for (var i = 0; i < posts.length; i++) {
-      final post = posts[i];
+    for (var i = 0; i < newPosts.length; i++) {
+      final post = newPosts[i];
       await _download(
         ref,
         post,
@@ -122,13 +152,59 @@ class DownloadNotifier extends FamilyNotifier<void, DownloadNotifierParams> {
         group: group,
         downloadPath: downloadPath,
         bulkMetadata: {
-          'total': posts.length.toString(),
+          'total': newPosts.length.toString(),
           'index': i.toString(),
         },
         networkConstraint: networkConstraint,
       );
     }
   }
+
+  Future<bool> _isAlreadyDownloaded(Post post) async {
+    final status = await ref.read(downloadHistoryProvider.notifier).statusOf((
+      siteUrl: arg.auth.url,
+      postId: post.id,
+    ));
+
+    return status != PostDownloadStatus.none;
+  }
+
+  void _showToast(String Function(BuildContext context) message) {
+    final context = ref
+        .read(appNavigationProvider)
+        .navigatorKey
+        .currentState
+        ?.context;
+    if (context == null || !context.mounted) return;
+
+    showDownloadStartToast(context, message: message(context));
+  }
+}
+
+void _recordOutcome(
+  Ref ref,
+  DownloadResult result, {
+  required String siteUrl,
+  required int postId,
+}) {
+  final history = ref.read(downloadHistoryProvider.notifier);
+  final key = (siteUrl: siteUrl, postId: postId);
+
+  unawaited(
+    switch (result) {
+      DownloadEnqueued() => history.markPending(key),
+      DownloadCompleted(:final info) ||
+      DownloadSkipped(:final info) => history.markDownloaded(
+        DownloadedPost(
+          siteUrl: siteUrl,
+          postId: postId,
+          downloadedAt: DateTime.now(),
+          filePath: info.path,
+        ),
+      ),
+      DownloadFailure() => history.clearPending(key),
+    },
+  );
 }
 
 Future<DownloadTaskInfo?> _download(
@@ -242,6 +318,7 @@ Future<DownloadTaskInfo?> _download(
           profileIconUrl: params.profileIconUrl,
           group: group,
           isVideo: downloadable.isVideo,
+          postId: downloadable.id,
         ),
         url: request.url,
         filename: fileName,
@@ -254,6 +331,13 @@ Future<DownloadTaskInfo?> _download(
         customPath: downloadPath,
         networkConstraint: resolvedNetworkConstraint,
       ),
+    );
+
+    _recordOutcome(
+      ref,
+      result,
+      siteUrl: params.auth.url,
+      postId: downloadable.id,
     );
 
     ref

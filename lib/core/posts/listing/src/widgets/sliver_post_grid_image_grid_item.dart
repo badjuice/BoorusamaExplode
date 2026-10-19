@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foundation/foundation.dart';
 import 'package:foundation/widgets.dart';
 import 'package:kurumi/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:selection_mode/selection_mode.dart';
 
 // Project imports:
 import '../../../../boorus/engine/providers.dart';
 import '../../../../configs/config/providers.dart';
 import '../../../../configs/gesture/types.dart';
+import '../../../../downloads/history/providers.dart';
+import '../../../../downloads/history/types.dart';
 import '../../../../settings/providers.dart';
 import '../../../post/tags.dart';
 import '../../../post/types.dart';
@@ -95,6 +98,9 @@ class SliverPostGridImageGridItem<T extends Post> extends ConsumerWidget {
         children: [
           ImageGridItem(
             leadingIcons: leadingIcons,
+            trailingBadge: _DownloadedBadge(
+              downloadKey: (siteUrl: auth.url, postId: post.id),
+            ),
             borderRadius: BorderRadius.circular(imageBorderRadius),
             isGif: post.isGif,
             isAI: post.isAI,
@@ -149,5 +155,24 @@ class SliverPostGridImageGridItem<T extends Post> extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+class _DownloadedBadge extends ConsumerWidget {
+  const _DownloadedBadge({required this.downloadKey});
+
+  final DownloadedPostKey downloadKey;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return switch (ref.watch(postDownloadStatusProvider(downloadKey))) {
+      PostDownloadStatus.downloaded => const ImageOverlayIcon(
+        icon: Symbols.download_done,
+      ),
+      PostDownloadStatus.pending => const ImageOverlayIcon(
+        icon: Symbols.downloading,
+      ),
+      PostDownloadStatus.none => const SizedBox.shrink(),
+    };
   }
 }

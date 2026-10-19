@@ -761,7 +761,9 @@
     "no_active_sessions": "No active download sessions",
     "nothing_to_show": "Nothing to show, download updates are empty",
     "notification": {
-      "started": "Download started"
+      "started": "Download started",
+      "already_downloaded": "Already downloaded",
+      "skipped_already_downloaded": "Skipped {count} already downloaded"
     },
     "status": {
       "in_progress": "In Progress",

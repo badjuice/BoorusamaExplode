@@ -41,6 +41,7 @@ class ImageGridItem extends StatelessWidget {
     this.quickActionButton,
     this.borderRadius,
     this.leadingIcons,
+    this.trailingBadge,
     this.splashColor,
   });
 
@@ -61,6 +62,7 @@ class ImageGridItem extends StatelessWidget {
   final Widget? quickActionButton;
   final BorderRadius? borderRadius;
   final List<Widget>? leadingIcons;
+  final Widget? trailingBadge;
   final Color? splashColor;
 
   @override
@@ -122,6 +124,12 @@ class ImageGridItem extends StatelessWidget {
                 ],
               ),
             ),
+            if (trailingBadge case final badge?)
+              Positioned(
+                top: 3,
+                right: 3,
+                child: IgnorePointer(child: badge),
+              ),
           ],
         ),
       ),

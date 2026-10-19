@@ -11,6 +11,8 @@ import 'package:material_symbols_icons/symbols.dart';
 // Project imports:
 import '../../../../configs/config/providers.dart';
 import '../../../../downloads/downloader/providers.dart';
+import '../../../../downloads/history/providers.dart';
+import '../../../../downloads/history/types.dart';
 import '../../../../downloads/urls/providers.dart';
 import '../../../../downloads/urls/types.dart';
 import '../../../post/types.dart';
@@ -58,6 +60,12 @@ class _DownloadPostButtonState extends ConsumerState<DownloadPostButton> {
 
     final iconColor = IconTheme.of(context).color ?? Colors.white;
     final sources = downloadSources?.getDownloadSources(context, widget.post);
+    final status = ref.watch(
+      postDownloadStatusProvider((
+        siteUrl: ref.watchConfigAuth.url,
+        postId: widget.post.id,
+      )),
+    );
 
     return _PopupMenuButton(
       enable: sources?.isNotEmpty ?? false,
@@ -97,6 +105,7 @@ class _DownloadPostButtonState extends ConsumerState<DownloadPostButton> {
                 icon: _buildIcon(
                   sources,
                   iconColor,
+                  status,
                 ),
               )
             : Material(
@@ -111,6 +120,7 @@ class _DownloadPostButtonState extends ConsumerState<DownloadPostButton> {
                     child: _buildIcon(
                       sources,
                       iconColor,
+                      status,
                     ),
                   ),
                 ),
@@ -119,18 +129,26 @@ class _DownloadPostButtonState extends ConsumerState<DownloadPostButton> {
     );
   }
 
-  Widget _buildIcon(List<DownloadSource>? sources, Color iconColor) =>
-      switch (sources) {
-        final s? when s.isNotEmpty => CustomPaint(
-          size: const Size(24, 24),
-          painter: DownloadWithDropdownIconPainter(
-            color: iconColor,
-          ),
-        ),
-        _ => const Icon(
-          Symbols.download,
-        ),
-      };
+  Widget _buildIcon(
+    List<DownloadSource>? sources,
+    Color iconColor,
+    PostDownloadStatus status,
+  ) => switch ((sources, status)) {
+    (_, PostDownloadStatus.downloaded) => const Icon(
+      Symbols.download_done,
+      fill: 1,
+    ),
+    (_, PostDownloadStatus.pending) => const Icon(Symbols.downloading),
+    (final s?, _) when s.isNotEmpty => CustomPaint(
+      size: const Size(24, 24),
+      painter: DownloadWithDropdownIconPainter(
+        color: iconColor,
+      ),
+    ),
+    _ => const Icon(
+      Symbols.download,
+    ),
+  };
 }
 
 class DownloadWithDropdownIconPainter extends CustomPainter {

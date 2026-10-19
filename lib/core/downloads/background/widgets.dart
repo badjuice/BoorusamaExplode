@@ -17,6 +17,8 @@ import '../../ddos/handler/providers.dart';
 import '../../ddos/solver/types.dart';
 import '../../download_manager/providers.dart';
 import '../downloader/types.dart' show DownloaderMetadata;
+import '../history/providers.dart';
+import '../history/types.dart';
 import '../sidecar/data.dart';
 import '../sidecar/providers.dart';
 import 'types.dart';
@@ -167,6 +169,37 @@ class _BackgroundDownloadRuntimeState
     }
 
     ref.read(downloadTaskEventIngressProvider).publish(update);
+
+    if (update case TaskStatusUpdate(:final task, :final status)) {
+      unawaited(_recordHistory(task, status));
+    }
+  }
+
+  Future<void> _recordHistory(Task task, TaskStatus status) async {
+    final metadata = DownloaderMetadata.fromJsonString(task.metaData);
+    final (siteUrl, postId) = (metadata.siteUrl, metadata.postId);
+    if (siteUrl == null || postId == null) return;
+
+    final history = ref.read(downloadHistoryProvider.notifier);
+
+    switch (status) {
+      case TaskStatus.complete:
+        await history.markDownloaded(
+          DownloadedPost(
+            siteUrl: siteUrl,
+            postId: postId,
+            downloadedAt: DateTime.now(),
+            filePath: await task.filePath(),
+          ),
+        );
+      case TaskStatus.failed || TaskStatus.canceled || TaskStatus.notFound:
+        await history.clearPending((siteUrl: siteUrl, postId: postId));
+      case TaskStatus.enqueued ||
+          TaskStatus.running ||
+          TaskStatus.waitingToRetry ||
+          TaskStatus.paused:
+        break;
+    }
   }
 
   @override
