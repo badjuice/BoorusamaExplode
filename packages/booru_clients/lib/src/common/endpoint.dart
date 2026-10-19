@@ -37,9 +37,15 @@ class Endpoint<T> {
     final uri = Uri.parse(base).resolve(path);
 
     final translatedParams = <String, String>{};
+    // A mapping may carry a value template, e.g. "tags=id:{}" sends the
+    // input value as tags=id:<value>.
     inputParams.forEach((key, value) {
-      final siteParamName = userParams[key] ?? key;
-      translatedParams[siteParamName] = value;
+      switch ((userParams[key] ?? key).split('=')) {
+        case [final name, final template]:
+          translatedParams[name] = template.replaceAll('{}', value);
+        case [final name, ...]:
+          translatedParams[name] = value;
+      }
     });
 
     final existingParams = uri.queryParameters;

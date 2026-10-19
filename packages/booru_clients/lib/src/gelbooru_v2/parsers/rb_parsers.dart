@@ -7,8 +7,22 @@ import '../../gelbooru/types/types.dart';
 import '../types.dart';
 
 List<TagDto> parseRbTagsHtml(Response response, Map<String, dynamic> context) {
-  final html = response.data as String;
+  final html = response.data;
+  if (html is! String) return [];
+
   final document = parse(html);
+
+  // A search for id:<post> lists that post's tags in the sidebar, each with
+  // its global post count; the post page itself has no counts.
+  final sidebarTags = document.querySelectorAll(
+    '.all-tag-container-view li[class^="tag-type-"]',
+  );
+  if (sidebarTags.isNotEmpty) {
+    return [
+      for (final li in sidebarTags) ?_parseRbSidebarTag(li),
+    ];
+  }
+
   final tagLink = document.getElementById('tagLink');
 
   if (tagLink == null) return [];
@@ -32,6 +46,30 @@ List<TagDto> parseRbTagsHtml(Response response, Map<String, dynamic> context) {
   tags.addAll(_parseRbTagElements(modelTags, 1)); // Treat models as artists
 
   return tags;
+}
+
+TagDto? _parseRbSidebarTag(Element li) {
+  final name = li.querySelector('a')?.text.trim().replaceAll(' ', '_');
+  if (name == null || name.isEmpty) return null;
+
+  final type = switch (li.className.replaceFirst('tag-type-', '')) {
+    'artist' || 'model' => 1,
+    'copyright' => 3,
+    'character' => 4,
+    'metadata' => 5,
+    _ => 0,
+  };
+  final count = int.tryParse(
+    RegExp(r'(\d+)\s*$').firstMatch(li.text.trim())?.group(1) ?? '',
+  );
+
+  return TagDto(
+    id: null,
+    name: name,
+    count: count,
+    type: type,
+    ambiguous: null,
+  );
 }
 
 List<TagDto> _parseRbTagElements(List<Element> elements, int type) {

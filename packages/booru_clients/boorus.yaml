@@ -166,7 +166,9 @@
           post:
             parser: "parseRbPostHtml"
           tags:
+            endpoint: "/index.php?page=post&s=list"
             parser: "parseRbTagsHtml"
+            user-params: {post-id: "tags=id:{}"}
           comments:
             type: html
             endpoint: "/index.php?page=post&s=view"

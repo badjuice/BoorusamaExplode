@@ -26,6 +26,29 @@ void main() {
     (id: 3, ext: '.jpg', tags: '1girl female_focus high_heels'),
   ];
 
+  test('reads tag types and global counts from the search sidebar', () {
+    const sidebar =
+        '<div class="all-tag-container-view">'
+        '<li class="tag-type-copyright"><a href="#">twitter</a> 5107</li>'
+        '<li class="tag-type-metadata"><a href="#">vertical video</a> 6891</li>'
+        '<li class="tag-type-general"><a href="#">redhead</a> 3998</li>'
+        '</div>';
+
+    final tags = parseRbTagsHtml(
+      Response(data: sidebar, requestOptions: RequestOptions()),
+      {},
+    );
+
+    expect(
+      tags.map((t) => (t.name, t.type, t.count)),
+      [
+        ('twitter', 3, 5107),
+        ('vertical_video', 5, 6891),
+        ('redhead', 0, 3998),
+      ],
+    );
+  });
+
   for (final c in cases) {
     test('post ${c.id} gets a ${c.ext} file url and underscored tags', () {
       final post = posts.firstWhere((p) => p.id == c.id);
