@@ -2,12 +2,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foundation/foundation.dart';
 import 'package:foundation/widgets.dart';
-import 'package:i18n/i18n.dart';
 import 'package:kurumi/material.dart';
 
 // Project imports:
 import '../../../core/configs/config/providers.dart';
-import '../../../core/configs/config/types.dart';
 import '../../../core/posts/details/routes.dart';
 import '../../../core/posts/details/types.dart';
 import '../../../core/posts/details/widgets.dart';
@@ -47,104 +45,33 @@ class GelbooruV2PostDetailsPage extends ConsumerWidget {
             ?.thumbnailOnly ??
         false;
 
-    if (thumbnailOnly) {
-      return _PostDetailsDataLoadingTransitionPage(
-        postId: NumericPostId(postId),
-        configSearch: configSearch,
-        pageBuilder: (context, detailsContext) {
-          final widget = InheritedDetailsContext(
-            context: detailsContext,
-            child: const _PayloadPostDetailsPage(),
-          );
-
-          return widget;
-        },
-      );
-    }
-
     final posts = payload.posts.map((e) => e as GelbooruV2Post).toList();
 
-    return PostDetailsScope(
+    return PostDetailsScope<GelbooruV2Post>(
       initialIndex: payload.initialIndex,
       initialThumbnailUrl: payload.initialThumbnailUrl,
       posts: posts,
       scrollController: payload.scrollController,
       dislclaimer: payload.dislclaimer,
-      child: const DefaultPostDetailsPage<GelbooruV2Post>(),
-    );
-  }
-}
+      // Listing entries of thumbnail-only sites lack the real file url and
+      // most metadata, so each post page is fetched as it comes into view.
+      postResolver: thumbnailOnly
+          ? (post) async {
+              final provider = gelbooruV2PostProvider(
+                (NumericPostId(post.id), configSearch),
+              );
 
-class _PayloadPostDetailsPage<T extends Post> extends ConsumerWidget {
-  const _PayloadPostDetailsPage({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final payload = InheritedDetailsContext.of<T>(context);
-    final configSearch = payload.configSearch;
-
-    if (configSearch == null) {
-      return const UnimplementedPage();
-    }
-
-    return PostDetailsScope(
-      initialIndex: payload.initialIndex,
-      initialThumbnailUrl: payload.initialThumbnailUrl,
-      posts: payload.posts.map((e) => e as GelbooruV2Post).toList(),
-      scrollController: payload.scrollController,
-      dislclaimer: payload.dislclaimer,
-      child: const DefaultPostDetailsPage<GelbooruV2Post>(),
-    );
-  }
-}
-
-class _PostDetailsDataLoadingTransitionPage extends ConsumerWidget {
-  const _PostDetailsDataLoadingTransitionPage({
-    required this.pageBuilder,
-    required this.postId,
-    required this.configSearch,
-  });
-
-  final PostId postId;
-  final BooruConfigSearch configSearch;
-
-  final Widget Function(
-    BuildContext context,
-    DetailsRouteContext<Post> detailsContext,
-  )
-  pageBuilder;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final params = (postId, configSearch);
-    return ref
-        .watch(gelbooruV2PostProvider(params))
-        .when(
-          data: (post) {
-            if (post == null) {
-              return InvalidPage(message: 'Invalid post: $post');
+              return switch (await ref.read(provider.future)) {
+                final GelbooruV2Post p => p,
+                _ => () {
+                  ref.invalidate(provider);
+                  return null;
+                }(),
+              };
             }
-
-            final detailsContext = DetailsRouteContext(
-              initialIndex: 0,
-              posts: [post],
-              scrollController: null,
-              isDesktop: false,
-              hero: false,
-              initialThumbnailUrl: null,
-              dislclaimer:
-                  'This site only supports viewing one post at a time.'.hc,
-              configSearch: configSearch,
-            );
-            return pageBuilder(context, detailsContext);
-          },
-          error: (error, stackTrace) => InvalidPage(message: error.toString()),
-          loading: () => const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          ),
-        );
+          : null,
+      child: const DefaultPostDetailsPage<GelbooruV2Post>(),
+    );
   }
 }
 

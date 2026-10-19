@@ -7,14 +7,23 @@ import '../../../post/types.dart';
 import '../../../slideshow/types.dart';
 import '../widgets/post_details_controller.dart';
 
+enum PostResolveStatus { loading, failed }
+
 class PostDetailsData<T extends Post> {
   const PostDetailsData({
     required this.posts,
     required this.controller,
+    this.resolveStatusOf,
+    this.onRetryResolve,
   });
 
   final List<T> posts;
   final PostDetailsController<T> controller;
+
+  /// Non-null while the post at an index is still a partial listing entry
+  /// whose full data has to be fetched before it can be shown.
+  final PostResolveStatus? Function(int index)? resolveStatusOf;
+  final void Function(int index)? onRetryResolve;
 }
 
 class PostDetails<T extends Post> extends InheritedWidget {

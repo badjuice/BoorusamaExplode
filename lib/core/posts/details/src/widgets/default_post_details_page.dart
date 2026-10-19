@@ -14,6 +14,7 @@ import 'post_details_image_preloader.dart';
 import 'post_details_item.dart';
 import 'post_details_notes.dart';
 import 'post_details_page_scaffold.dart';
+import 'post_details_resolving_item.dart';
 
 class DefaultPostDetailsPage<T extends Post> extends ConsumerStatefulWidget {
   const DefaultPostDetailsPage({
@@ -80,6 +81,15 @@ class _DefaultPostDetailsPageState<T extends Post>
             ),
           ),
           itemBuilder: (context, index) {
+            if (data.resolveStatusOf?.call(index) case final status?) {
+              return PostDetailsResolvingItem(
+                post: posts[index],
+                status: status,
+                authConfig: auth,
+                onRetry: () => data.onRetryResolve?.call(index),
+              );
+            }
+
             return PostDetailsItem(
               index: index,
               posts: posts,

@@ -22,6 +22,7 @@ class PostDetailsScope<T extends Post> extends ConsumerStatefulWidget {
     required this.child,
     required this.scrollController,
     super.key,
+    this.postResolver,
   });
 
   final int initialIndex;
@@ -30,6 +31,10 @@ class PostDetailsScope<T extends Post> extends ConsumerStatefulWidget {
   final String? dislclaimer;
   final AutoScrollController? scrollController;
   final Widget child;
+
+  /// Fetches the full post for a partial listing entry. When set, each post
+  /// is resolved as it comes into view and shown as a placeholder until then.
+  final Future<T?> Function(T post)? postResolver;
 
   @override
   ConsumerState<PostDetailsScope<T>> createState() =>
@@ -40,6 +45,10 @@ class _PostDetailsLayoutSwitcherState<T extends Post>
     extends ConsumerState<PostDetailsScope<T>> {
   late final PostDetailsController<T> _controller;
   late final PostDetailsPageViewController _pageViewController;
+  late final List<T> _posts = List.of(widget.posts);
+  final _resolved = <int>{};
+  final _failed = <int>{};
+  final _inflight = <int>{};
 
   @override
   void initState() {
@@ -58,7 +67,7 @@ class _PostDetailsLayoutSwitcherState<T extends Post>
       scrollController: widget.scrollController,
       initialPage: initialPage,
       initialThumbnailUrl: widget.initialThumbnailUrl,
-      posts: widget.posts,
+      posts: _posts,
       reduceAnimations: reduceAnimations,
       dislclaimer: widget.dislclaimer,
       doubleTapSeekDuration: viewerSettings.doubleTapSeekDuration,
@@ -74,7 +83,7 @@ class _PostDetailsLayoutSwitcherState<T extends Post>
       disableAnimation: reduceAnimations,
       onBeforeSlideshowAdvance: (currentPage, nextPage) async {
         if (viewerSettings.slideshowVideoBehavior.isWaitForCompletion) {
-          final currentPost = widget.posts[currentPage];
+          final currentPost = _posts[currentPage];
 
           if (currentPost.isVideo) {
             await _controller.waitForVideoCompletion(currentPost.id);
@@ -82,10 +91,61 @@ class _PostDetailsLayoutSwitcherState<T extends Post>
         }
       },
     );
+
+    if (widget.postResolver != null) {
+      _controller.currentPage.addListener(_resolveAroundCurrentPage);
+      _resolveAroundCurrentPage();
+    }
   }
+
+  void _resolveAroundCurrentPage() {
+    final page = _controller.currentPage.value;
+    [page, page + 1, page - 1].forEach(_resolve);
+  }
+
+  Future<void> _resolve(int index) async {
+    final resolver = widget.postResolver;
+    if (resolver == null || index < 0 || index >= _posts.length) return;
+    if (_resolved.contains(index) || _failed.contains(index)) return;
+    if (!_inflight.add(index)) return;
+
+    T? post;
+    try {
+      post = await resolver(_posts[index]);
+    } catch (_) {
+      post = null;
+    } finally {
+      _inflight.remove(index);
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      switch (post) {
+        case final T p:
+          _posts[index] = p;
+          _resolved.add(index);
+          _controller.updateCurrentPost(_controller.currentPage.value);
+        case null:
+          _failed.add(index);
+      }
+    });
+  }
+
+  void _retryResolve(int index) {
+    setState(() => _failed.remove(index));
+    _resolve(index);
+  }
+
+  PostResolveStatus? _resolveStatusOf(int index) => switch (index) {
+    _ when _resolved.contains(index) => null,
+    _ when _failed.contains(index) => PostResolveStatus.failed,
+    _ => PostResolveStatus.loading,
+  };
 
   @override
   void dispose() {
+    _controller.currentPage.removeListener(_resolveAroundCurrentPage);
     _controller.dispose();
     _pageViewController.dispose();
 
@@ -98,8 +158,12 @@ class _PostDetailsLayoutSwitcherState<T extends Post>
       controller: _pageViewController,
       child: PostDetails(
         data: PostDetailsData(
-          posts: widget.posts,
+          posts: _posts,
           controller: _controller,
+          resolveStatusOf: widget.postResolver != null
+              ? _resolveStatusOf
+              : null,
+          onRetryResolve: _retryResolve,
         ),
         child: CurrentPostScope(
           post: _controller.currentPost,
