@@ -1,3 +1,6 @@
+// Dart imports:
+import 'dart:async';
+
 // Package imports:
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foundation/foundation.dart';
@@ -23,7 +26,6 @@ import '../l10n.dart';
 import '../data/file_downloader_task_client.dart';
 import '../providers/download_task_updates_notifier.dart';
 import '../providers/internal_providers.dart';
-import '../widgets/download_filter_options.dart';
 import '../widgets/download_selectable_item.dart';
 import '../widgets/retry_all_failed_button.dart';
 import '../widgets/simple_download_tile.dart';
@@ -66,34 +68,45 @@ class DownloadManagerPage extends ConsumerStatefulWidget {
       _DownloadManagerPageState();
 }
 
-class _DownloadManagerPageState extends ConsumerState<DownloadManagerPage> {
-  final scrollController = AutoScrollController();
+class _DownloadManagerPageState extends ConsumerState<DownloadManagerPage>
+    with SingleTickerProviderStateMixin {
   final _selectionModeController = SelectionModeController();
+  final _scrollControllers = {
+    for (final filter in kFilterOptions) filter: AutoScrollController(),
+  };
+  late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
 
-    if (widget.filter != null) {
-      // scroll to the selected filter
-      final filterType = convertFilter(widget.filter);
-      final index = kFilterOptions.indexOf(filterType);
+    final initialIndex = kFilterOptions.indexOf(convertFilter(widget.filter));
 
-      if (index != -1) {
-        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-          scrollController.scrollToIndex(
-            index,
-            preferPosition: AutoScrollPosition.end,
-            duration: const Duration(milliseconds: 100),
-          );
-        });
-      }
-    }
+    _tabController = TabController(
+      length: kFilterOptions.length,
+      initialIndex: initialIndex == -1 ? 0 : initialIndex,
+      vsync: this,
+    )..addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    final filter = kFilterOptions[_tabController.index];
+    final notifier = ref.read(downloadFilterProvider(widget.filter).notifier);
+
+    if (notifier.state == filter) return;
+
+    _selectionModeController.disable();
+    notifier.state = filter;
   }
 
   @override
   void dispose() {
-    scrollController.dispose();
+    _tabController
+      ..removeListener(_onTabChanged)
+      ..dispose();
+    for (final controller in _scrollControllers.values) {
+      controller.dispose();
+    }
     _selectionModeController.dispose();
 
     super.dispose();
@@ -102,13 +115,14 @@ class _DownloadManagerPageState extends ConsumerState<DownloadManagerPage> {
   @override
   Widget build(BuildContext context) {
     final tasks = ref.watch(downloadFilteredProvider(widget.filter));
+    final currentFilter = ref.watch(downloadFilterProvider(widget.filter));
     final config = ref.watchConfig;
     final group = ref.watch(downloadGroupProvider);
     final isDefaultGroup = group == FileDownloader.defaultGroup;
 
     return SelectionMode(
       controller: _selectionModeController,
-      scrollController: scrollController,
+      scrollController: _scrollControllers[currentFilter],
       child: Scaffold(
         appBar: DefaultSelectionAppBar(
           itemsCount: tasks.length,
@@ -136,11 +150,13 @@ class _DownloadManagerPageState extends ConsumerState<DownloadManagerPage> {
                     title: Text(context.t.generic.action.clear),
                     onTap: () {
                       // clear default group only
+                      var cleared = true;
                       ref
                           .read(downloadTaskUpdatesProvider.notifier)
                           .clear(
                             FileDownloader.defaultGroup,
                             onFailed: () {
+                              cleared = false;
                               Kurumi.showSimpleSnackBar(
                                 context: context,
                                 content: Text(
@@ -150,6 +166,13 @@ class _DownloadManagerPageState extends ConsumerState<DownloadManagerPage> {
                               );
                             },
                           );
+                      if (cleared) {
+                        unawaited(
+                          FileDownloader().database.deleteAllRecords(
+                            group: FileDownloader.defaultGroup,
+                          ),
+                        );
+                      }
                     },
                   ),
                 ],
@@ -164,51 +187,24 @@ class _DownloadManagerPageState extends ConsumerState<DownloadManagerPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   SelectionConsumer(
-                    builder: (_, controller, _) {
-                      final multiSelect = controller.isActive;
-                      return AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        transitionBuilder: (child, animation) => SizeTransition(
-                          sizeFactor: animation,
-                          child: FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          ),
-                        ),
-                        child: multiSelect
-                            ? const SizedBox.shrink()
-                            : DownloadFilterOptions(
-                                scrollController: scrollController,
-                                filter: widget.filter,
-                              ),
-                      );
-                    },
+                    builder: (_, controller, _) => IgnorePointer(
+                      ignoring: controller.isActive,
+                      child: _DownloadTabBar(controller: _tabController),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: tasks.isNotEmpty
-                          ? SelectionCanvas(
-                              child: _buildList(tasks, config),
-                            )
-                          : Column(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 24,
-                                  ),
-                                  child: Text(
-                                    ref
-                                        .watch(
-                                          downloadFilterProvider(widget.filter),
-                                        )
-                                        .emptyLocalize(context),
-                                  ),
-                                ),
-                                const Spacer(),
-                              ],
-                            ),
+                    child: SelectionConsumer(
+                      builder: (_, controller, _) => TabBarView(
+                        controller: _tabController,
+                        physics: controller.isActive
+                            ? const NeverScrollableScrollPhysics()
+                            : null,
+                        children: [
+                          for (final filter in kFilterOptions)
+                            _buildTab(filter, config),
+                        ],
+                      ),
                     ),
                   ),
                   RetryAllFailedButton(filter: widget.filter),
@@ -264,8 +260,32 @@ class _DownloadManagerPageState extends ConsumerState<DownloadManagerPage> {
     );
   }
 
-  Widget _buildList(List<TaskUpdate> tasks, BooruConfig config) {
+  Widget _buildTab(DownloadFilter filter, BooruConfig config) {
+    final tasks = ref.watch(downloadTasksByFilterProvider(filter));
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: tasks.isNotEmpty
+          ? SelectionCanvas(
+              child: _buildList(tasks, config, _scrollControllers[filter]),
+            )
+          : Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(filter.emptyLocalize(context)),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildList(
+    List<TaskUpdate> tasks,
+    BooruConfig config,
+    ScrollController? scrollController,
+  ) {
     return ListView.builder(
+      controller: scrollController,
       itemCount: tasks.length,
       itemBuilder: (context, index) {
         final task = tasks[index];
@@ -323,6 +343,77 @@ class _DownloadManagerPageState extends ConsumerState<DownloadManagerPage> {
           ),
         );
       },
+    );
+  }
+}
+
+class _DownloadTabBar extends ConsumerWidget {
+  const _DownloadTabBar({required this.controller});
+
+  final TabController controller;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return TabBar(
+      controller: controller,
+      isScrollable: true,
+      tabAlignment: TabAlignment.start,
+      tabs: [
+        for (final filter in kFilterOptions)
+          Tab(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(filter.localize(context)),
+                const SizedBox(width: 6),
+                _CountPill(
+                  count: ref.watch(
+                    downloadTasksByFilterProvider(filter).select(
+                      (tasks) => tasks.length,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// Always rendered, with a fixed minimum width, so tab labels don't move when
+// a count changes.
+class _CountPill extends StatelessWidget {
+  const _CountPill({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Kurumi.themeOf(context).colorScheme;
+    final active = count > 0;
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: active
+            ? colorScheme.secondaryContainer
+            : colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        count > 999 ? '999+' : '$count',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          fontFeatures: const [FontFeature.tabularFigures()],
+          color: active
+              ? colorScheme.onSecondaryContainer
+              : colorScheme.onSurfaceVariant,
+        ),
+      ),
     );
   }
 }

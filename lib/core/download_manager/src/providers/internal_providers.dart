@@ -22,19 +22,31 @@ final downloadGroupProvider = Provider<String>(
 final downloadFilteredProvider = Provider.family<List<TaskUpdate>, String?>(
   (ref, initialFilter) {
     final filter = ref.watch(downloadFilterProvider(initialFilter));
-    final group = ref.watch(downloadGroupProvider);
-    final state = ref.watch(downloadTaskUpdatesProvider);
 
-    return switch (filter) {
-      DownloadFilter.pending => state.pending(group),
-      DownloadFilter.paused => state.paused(group),
-      DownloadFilter.inProgress => state.inProgress(group),
-      DownloadFilter.completed => state.completed(group),
-      DownloadFilter.failed => state.failed(group),
-      DownloadFilter.canceled => state.canceled(group),
-    };
+    return ref.watch(downloadTasksByFilterProvider(filter));
   },
   dependencies: [
     downloadGroupProvider,
+    downloadTasksByFilterProvider,
   ],
 );
+
+final downloadTasksByFilterProvider =
+    Provider.family<List<TaskUpdate>, DownloadFilter>(
+      (ref, filter) {
+        final group = ref.watch(downloadGroupProvider);
+        final state = ref.watch(downloadTaskUpdatesProvider);
+
+        return switch (filter) {
+          DownloadFilter.pending => state.pending(group),
+          DownloadFilter.paused => state.paused(group),
+          DownloadFilter.inProgress => state.inProgress(group),
+          DownloadFilter.completed => state.completed(group),
+          DownloadFilter.failed => state.failed(group),
+          DownloadFilter.canceled => state.canceled(group),
+        };
+      },
+      dependencies: [
+        downloadGroupProvider,
+      ],
+    );
