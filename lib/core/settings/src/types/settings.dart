@@ -166,6 +166,7 @@ class Settings extends Equatable {
       slideshowVideoBehavior: SlideshowVideoBehavior.defaultValue,
       videoAudioDefaultState: VideoAudioDefaultState.defaultValue,
       videoPlayerEngine: VideoPlayerEngine.defaultValue,
+      videoAudioFocusMode: VideoAudioFocusMode.defaultValue,
       enableVideoCache: true,
       doubleTapSeekDuration: 5,
     ),
@@ -566,6 +567,7 @@ class ImageViewerSettings extends Equatable {
     required this.slideshowVideoBehavior,
     required this.videoAudioDefaultState,
     required this.videoPlayerEngine,
+    required this.videoAudioFocusMode,
     required this.enableVideoCache,
     required this.doubleTapSeekDuration,
   });
@@ -589,6 +591,9 @@ class ImageViewerSettings extends Equatable {
       videoPlayerEngine = VideoPlayerEngine.parse(
         json['videoPlayerEngine'],
       ),
+      videoAudioFocusMode = VideoAudioFocusMode.parse(
+        json['videoAudioFocusMode'],
+      ),
       enableVideoCache = json['enableVideoCache'] ?? true,
       doubleTapSeekDuration = json['doubleTapSeekDuration'] ?? 10;
 
@@ -600,6 +605,7 @@ class ImageViewerSettings extends Equatable {
   final SlideshowVideoBehavior slideshowVideoBehavior;
   final VideoAudioDefaultState videoAudioDefaultState;
   final VideoPlayerEngine videoPlayerEngine;
+  final VideoAudioFocusMode videoAudioFocusMode;
   final bool enableVideoCache;
   final int doubleTapSeekDuration;
 
@@ -612,6 +618,7 @@ class ImageViewerSettings extends Equatable {
     SlideshowVideoBehavior? slideshowVideoBehavior,
     VideoAudioDefaultState? videoAudioDefaultState,
     VideoPlayerEngine? videoPlayerEngine,
+    VideoAudioFocusMode? videoAudioFocusMode,
     bool? enableVideoCache,
     int? doubleTapSeekDuration,
   }) {
@@ -628,6 +635,7 @@ class ImageViewerSettings extends Equatable {
       videoAudioDefaultState:
           videoAudioDefaultState ?? this.videoAudioDefaultState,
       videoPlayerEngine: videoPlayerEngine ?? this.videoPlayerEngine,
+      videoAudioFocusMode: videoAudioFocusMode ?? this.videoAudioFocusMode,
       enableVideoCache: enableVideoCache ?? this.enableVideoCache,
       doubleTapSeekDuration:
           doubleTapSeekDuration ?? this.doubleTapSeekDuration,
@@ -643,6 +651,7 @@ class ImageViewerSettings extends Equatable {
     'slideshowVideoBehavior': slideshowVideoBehavior.toData(),
     'videoAudioDefaultState': videoAudioDefaultState.toData(),
     'videoPlayerEngine': videoPlayerEngine.toData(),
+    'videoAudioFocusMode': videoAudioFocusMode.toData(),
     'enableVideoCache': enableVideoCache,
     'doubleTapSeekDuration': doubleTapSeekDuration,
   };
@@ -657,6 +666,7 @@ class ImageViewerSettings extends Equatable {
     slideshowVideoBehavior,
     videoAudioDefaultState,
     videoPlayerEngine,
+    videoAudioFocusMode,
     enableVideoCache,
     doubleTapSeekDuration,
   ];

@@ -428,6 +428,13 @@
         "vertical_description": "TikTok-style up/down swiping. Popular on short video platforms. Portrait mode only."
       },
       "mute_video": "Mute video by default",
+      "audio_focus": {
+        "title": "When other audio plays",
+        "description": "What a video does during a call or when another app plays sound",
+        "mute": "Keep playing, muted",
+        "pause": "Pause, then resume",
+        "mix": "Keep playing with sound"
+      },
       "double_tap_seek": "Double-tap to seek",
       "video_section_title": "Video",
       "manage_cache": "Manage cache",

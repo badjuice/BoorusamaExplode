@@ -211,6 +211,25 @@ class ImageViewerSettingsSection extends ConsumerWidget {
           ),
         ),
         KurumiSettingsTile(
+          title: Text(context.t.settings.image_viewer.audio_focus.title),
+          subtitle: Text(
+            context.t.settings.image_viewer.audio_focus.description,
+          ),
+          selectedOption: viewer.videoAudioFocusMode,
+          items: VideoAudioFocusMode.values,
+          onChanged: (value) => onUpdate(
+            viewer.copyWith(videoAudioFocusMode: value),
+          ),
+          optionBuilder: (value) => Text(switch (value) {
+            VideoAudioFocusMode.muteWhileInterrupted =>
+              context.t.settings.image_viewer.audio_focus.mute,
+            VideoAudioFocusMode.pauseAndResume =>
+              context.t.settings.image_viewer.audio_focus.pause,
+            VideoAudioFocusMode.mixWithOthers =>
+              context.t.settings.image_viewer.audio_focus.mix,
+          }),
+        ),
+        KurumiSettingsTile(
           title: Text(context.t.settings.image_viewer.double_tap_seek),
           selectedOption: viewer.doubleTapSeekDuration,
           items: getDoubleTapSeekDurationPossibleValues(),

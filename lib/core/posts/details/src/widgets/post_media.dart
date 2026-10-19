@@ -120,6 +120,11 @@ class PostMedia<T extends Post> extends ConsumerWidget {
                             cachedBypassDdosHeadersProvider(request.url),
                           ),
                       },
+                      audioFocusMode: ref.watch(
+                        imageViewerSettingsProvider.select(
+                          (value) => value.videoAudioFocusMode,
+                        ),
+                      ),
                       videoPlayerEngine: ref.watch(
                         imageViewerSettingsProvider.select(
                           (value) => value.videoPlayerEngine,

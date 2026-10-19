@@ -17,23 +17,25 @@ typedef VideoControllerFactory = VideoPlayerController Function(
   VideoConfig? config,
 );
 
-VideoPlayerController _defaultControllerFactory(
-  VideoSource source,
-  VideoConfig? config,
-) {
-  return VideoPlayerController.networkUrl(
-    Uri.parse(source.url),
-    httpHeaders: config?.headers ?? {},
-  );
-}
+VideoControllerFactory _defaultControllerFactory({
+  required bool mixWithOthers,
+}) =>
+    (source, config) => VideoPlayerController.networkUrl(
+      Uri.parse(source.url),
+      httpHeaders: config?.headers ?? {},
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: mixWithOthers),
+    );
 
 class VideoPlayerBooruPlayer implements BooruPlayer {
   VideoPlayerBooruPlayer({
     required this.wakelock,
     this.videoPlayerEngine = VideoPlayerEngine.auto,
+    bool mixWithOthers = false,
     @visibleForTesting VideoControllerFactory? controllerFactory,
     @visibleForTesting bool skipFvpInit = false,
-  }) : _controllerFactory = controllerFactory ?? _defaultControllerFactory,
+  }) : _controllerFactory =
+           controllerFactory ??
+           _defaultControllerFactory(mixWithOthers: mixWithOthers),
        _skipFvpInit = skipFvpInit;
 
   final VideoPlayerEngine videoPlayerEngine;

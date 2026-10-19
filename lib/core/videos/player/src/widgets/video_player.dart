@@ -19,6 +19,8 @@ import '../../../../configs/config/providers.dart';
 import '../../../../images/booru_image.dart';
 import '../../../engines/providers.dart';
 import '../../../engines/types.dart';
+import '../providers/audio_interruption_provider.dart';
+import '../types/video_audio_focus_mode.dart';
 import '../types/video_player_state.dart';
 import 'video_player_error_container.dart';
 
@@ -55,6 +57,7 @@ class BooruVideo extends ConsumerStatefulWidget {
     this.cacheDelay,
     this.fileSize,
     this.shouldInitialize = true,
+    this.audioFocusMode = VideoAudioFocusMode.defaultValue,
     @visibleForTesting this.playerDisposer,
   });
 
@@ -76,6 +79,7 @@ class BooruVideo extends ConsumerStatefulWidget {
   final Logger? logger;
   final CacheDelayCallback? cacheDelay;
   final bool shouldInitialize;
+  final VideoAudioFocusMode audioFocusMode;
   final PlayerDisposer? playerDisposer;
 
   @override
@@ -106,6 +110,23 @@ class _BooruVideoState extends ConsumerState<BooruVideo> {
     isBuffering: _isBuffering,
     aspectRatio: widget.aspectRatio,
   );
+
+  bool get _muteWhileInterrupted =>
+      widget.audioFocusMode == VideoAudioFocusMode.muteWhileInterrupted;
+
+  double get _volume => switch (widget.sound) {
+    false => 0,
+    true
+        when _muteWhileInterrupted && ref.read(videoAudioInterruptedProvider) =>
+      0,
+    true => 1,
+  };
+
+  void _acquireAudioFocusIfNeeded() {
+    if (_muteWhileInterrupted && widget.sound) {
+      ref.read(videoAudioInterruptedProvider.notifier).acquireFocus();
+    }
+  }
 
   void _log(
     void Function(String tag, String message)? logMethod,
@@ -166,13 +187,14 @@ class _BooruVideoState extends ConsumerState<BooruVideo> {
 
     _log(
       widget.logger?.debug,
-      'Updating player settings - Volume: ${widget.sound ? 1.0 : 0.0}, Speed: ${widget.speed}',
+      'Updating player settings - Volume: $_volume, Speed: ${widget.speed}',
     );
     if (_player case final player?) {
       player
-        ..setVolume(widget.sound ? 1.0 : 0.0)
+        ..setVolume(_volume)
         ..setPlaybackSpeed(widget.speed);
     }
+    _acquireAudioFocusIfNeeded();
   }
 
   Future<void> _initializePlayer() async {
@@ -244,6 +266,7 @@ class _BooruVideoState extends ConsumerState<BooruVideo> {
         platform: ref.read(appPlatformProvider),
         fileSystem: ref.read(appFileSystemProvider),
         userAgent: widget.userAgent,
+        mixWithOthers: widget.audioFocusMode.playerMixesWithOthers,
       );
 
       if (!player.isPlatformSupported()) {
@@ -264,9 +287,10 @@ class _BooruVideoState extends ConsumerState<BooruVideo> {
 
       _log(
         widget.logger?.debug,
-        'Setting initial player configuration - Volume: ${widget.sound ? 1.0 : 0.0}, Speed: ${widget.speed}, Looping: true',
+        'Setting initial player configuration - Volume: $_volume, Speed: ${widget.speed}, Looping: true',
       );
-      await player.setVolume(widget.sound ? 1.0 : 0.0);
+      await player.setVolume(_volume);
+      _acquireAudioFocusIfNeeded();
       await player.setPlaybackSpeed(widget.speed);
       await player.setLooping(true);
 
@@ -513,6 +537,10 @@ class _BooruVideoState extends ConsumerState<BooruVideo> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(videoAudioInterruptedProvider, (_, _) {
+      if (_muteWhileInterrupted) _updatePlayerSettings();
+    });
+
     return Center(
       child: switch (_currentState) {
         VideoPlayerReady(

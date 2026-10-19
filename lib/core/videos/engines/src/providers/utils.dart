@@ -19,6 +19,7 @@ BooruPlayer createBooruPlayer({
   required AppPlatform platform,
   required AppFileSystem fileSystem,
   String? userAgent,
+  bool mixWithOthers = false,
 }) => switch (engine) {
   VideoPlayerEngine.webview => WebViewBooruPlayer(
     wakelock: Wakelock(),
@@ -35,6 +36,7 @@ BooruPlayer createBooruPlayer({
   VideoPlayerEngine.mdk => VideoPlayerBooruPlayer(
     wakelock: Wakelock(),
     videoPlayerEngine: engine,
+    mixWithOthers: mixWithOthers,
   ),
 };
 
