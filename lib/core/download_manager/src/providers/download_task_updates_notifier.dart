@@ -91,6 +91,21 @@ class DownloadTaskUpdatesNotifier extends Notifier<DownloadTaskUpdateState> {
     }
   }
 
+  /// Adds persisted updates without overwriting tasks already reported live.
+  void restore(Iterable<TaskUpdate> updates) {
+    final tasks = {
+      for (final MapEntry(:key, :value) in state.tasks.entries) key: [...value],
+    };
+
+    for (final update in updates) {
+      final group = tasks.putIfAbsent(update.task.group, () => []);
+      if (group.any((e) => e.task == update.task)) continue;
+      group.add(update);
+    }
+
+    state = DownloadTaskUpdateState(tasks: tasks);
+  }
+
   void addOrUpdate(TaskUpdate update) {
     final totalTasks = state.tasks;
     final group = update.task.group;

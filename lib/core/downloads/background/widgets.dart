@@ -191,6 +191,30 @@ class _BackgroundDownloadRuntimeState
     downloadUpdates = FileDownloader().updates.listen((update) {
       unawaited(_update(update));
     });
+
+    unawaited(_restoreHistory());
+  }
+
+  Future<void> _restoreHistory() async {
+    try {
+      await FileDownloader().trackTasks();
+      final records = await FileDownloader().database.allRecords();
+      if (!mounted) return;
+
+      ref
+          .read(downloadTaskUpdatesProvider.notifier)
+          .restore(
+            records.map((r) => TaskStatusUpdate(r.task, r.status, r.exception)),
+          );
+    } catch (error) {
+      ref
+          .read(loggerProvider)
+          .error(
+            'Download',
+            'History restore failed: ${error.runtimeType}',
+            sensitiveMessage: error.toString(),
+          );
+    }
   }
 
   @override
