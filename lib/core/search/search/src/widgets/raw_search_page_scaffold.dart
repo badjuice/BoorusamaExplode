@@ -13,6 +13,7 @@ import 'package:selection_mode/selection_mode.dart';
 // Project imports:
 import '../../../../../foundation/utils/stream/text_editing_controller_utils.dart';
 import '../../../../analytics/providers.dart';
+import '../../../../downloads/organization/providers.dart';
 import '../../../../analytics/types.dart';
 import '../../../../posts/listing/providers.dart';
 import '../../../../posts/listing/types.dart';
@@ -162,6 +163,16 @@ class _SearchPageScaffoldState<T extends Post>
     _selectionModeController.addListener(
       _onMultiSelectChanged,
     );
+
+    _registerActiveSearch();
+  }
+
+  late final _activeSearches = ref.read(activeSearchesProvider.notifier);
+
+  // Deferred: providers can't change while the tree is building or unmounting.
+  void _registerActiveSearch() {
+    final query = _controller.tagString.value;
+    Future.microtask(() => _activeSearches.set(this, query));
   }
 
   void _onMultiSelectChanged() {
@@ -188,6 +199,8 @@ class _SearchPageScaffoldState<T extends Post>
   late bool? _previousMultiSelectState;
 
   void _onTagChanged() {
+    _registerActiveSearch();
+
     // check if scroll controller is attached
     if (_scrollController.hasClients) {
       // scroll to top when tag is added
@@ -211,6 +224,7 @@ class _SearchPageScaffoldState<T extends Post>
 
   @override
   void dispose() {
+    Future.microtask(() => _activeSearches.remove(this));
     _tagsController.removeListener(_onSelectedTagChanged);
     _controller.tagString.removeListener(_onTagChanged);
     _selectionModeController.removeListener(

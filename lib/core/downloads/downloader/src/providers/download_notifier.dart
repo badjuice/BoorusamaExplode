@@ -24,6 +24,8 @@ import '../../../../settings/types.dart';
 import '../../../filename/types.dart';
 import '../../../history/providers.dart';
 import '../../../history/types.dart';
+import '../../../organization/providers.dart';
+import '../../../organization/types.dart';
 import '../../../sidecar/types.dart';
 import '../../../urls/types.dart';
 import '../types/download.dart';
@@ -329,6 +331,18 @@ Future<DownloadTaskInfo?> _download(
             AppHttpHeaders.cookieHeader: urlData.cookie!,
         },
         customPath: downloadPath,
+        folderName: downloadSubfolder(
+          bySite: params.settings.downloadFolderBySite,
+          bySearch: params.settings.downloadFolderBySearch,
+          byMediaType: params.settings.downloadFolderByMediaType,
+          siteUrl: params.auth.url,
+          searchQuery: ref.read(activeSearchQueryProvider),
+          mediaKind: switch (downloadable) {
+            Post(isVideo: true) => DownloadMediaKind.video,
+            Post(isGif: true) => DownloadMediaKind.gif,
+            _ => DownloadMediaKind.image,
+          },
+        ),
         networkConstraint: resolvedNetworkConstraint,
       ),
     );

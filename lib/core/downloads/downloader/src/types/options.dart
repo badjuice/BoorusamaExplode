@@ -1,6 +1,5 @@
 // Package imports:
 import 'package:equatable/equatable.dart';
-import 'package:path/path.dart' show join;
 
 // Project imports:
 import '../../../../configs/config/types.dart';
@@ -55,7 +54,7 @@ class DownloadOptions extends Equatable {
       sidecar: sidecar,
       skipIfExists: settings.downloadFileExistedBehavior.skipDownloadIfExists,
       path: switch (path) {
-        final String p when p.isNotEmpty => join(p, folderName),
+        final String p when p.isNotEmpty => p,
         _ => null,
       },
       folderName: folderName,

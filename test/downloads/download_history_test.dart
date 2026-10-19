@@ -20,7 +20,7 @@ ProviderContainer _container([DownloadedPostRepository? repo]) {
   final repository = repo ?? InMemoryDownloadedPostRepository();
   return createContainer(
     overrides: [
-      downloadedPostRepoProvider.overrideWith((ref) async => repository),
+      downloadedPostRepoProvider.overrideWith((ref) => repository),
     ],
   );
 }

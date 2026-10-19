@@ -54,6 +54,9 @@ class Settings extends Equatable {
     required this.booruConfigLabelVisibility,
     required this.reduceAnimations,
     required this.downloadFileExistedBehavior,
+    required this.downloadFolderBySite,
+    required this.downloadFolderBySearch,
+    required this.downloadFolderByMediaType,
     required this.downloadNotificationsEnabled,
     required this.downloadNetworkPolicy,
     this.downloadSidecarFormat = SidecarFormat.off,
@@ -131,6 +134,9 @@ class Settings extends Equatable {
       ),
       volumeKeyViewerNavigation = json['volumeKeyViewerNavigation'] ?? false,
       reduceAnimations = json['reduceAnimations'] ?? false,
+      downloadFolderBySite = json['downloadFolderBySite'] ?? true,
+      downloadFolderBySearch = json['downloadFolderBySearch'] ?? false,
+      downloadFolderByMediaType = json['downloadFolderByMediaType'] ?? false,
       swipeAreaToOpenSidebarPercentage =
           json['swipeAreaToOpenSidebarPercentage'] ?? 5,
       autoBackup = AutoBackupSettings.parse(json['autoBackup']),
@@ -195,6 +201,9 @@ class Settings extends Equatable {
     booruConfigLabelVisibility: BooruConfigLabelVisibility.defaultValue,
     reduceAnimations: false,
     downloadFileExistedBehavior: DownloadFileExistedBehavior.defaultValue,
+    downloadFolderBySite: true,
+    downloadFolderBySearch: false,
+    downloadFolderByMediaType: false,
     downloadNotificationsEnabled: true,
     downloadNetworkPolicy: DownloadNetworkPolicy.defaultValue,
     volumeKeyViewerNavigation: false,
@@ -253,6 +262,12 @@ class Settings extends Equatable {
 
   final DownloadFileExistedBehavior downloadFileExistedBehavior;
 
+  /// Subfolders inside the download location, nested in this order:
+  /// site / search / media type.
+  final bool downloadFolderBySite;
+  final bool downloadFolderBySearch;
+  final bool downloadFolderByMediaType;
+
   final bool downloadNotificationsEnabled;
   final SidecarFormat downloadSidecarFormat;
 
@@ -298,6 +313,9 @@ class Settings extends Equatable {
     BooruConfigLabelVisibility? booruConfigLabelVisibility,
     bool? reduceAnimations,
     DownloadFileExistedBehavior? downloadFileExistedBehavior,
+    bool? downloadFolderBySite,
+    bool? downloadFolderBySearch,
+    bool? downloadFolderByMediaType,
     bool? downloadNotificationsEnabled,
     DownloadNetworkPolicy? downloadNetworkPolicy,
     SidecarFormat? downloadSidecarFormat,
@@ -348,6 +366,11 @@ class Settings extends Equatable {
     reduceAnimations: reduceAnimations ?? this.reduceAnimations,
     downloadFileExistedBehavior:
         downloadFileExistedBehavior ?? this.downloadFileExistedBehavior,
+    downloadFolderBySite: downloadFolderBySite ?? this.downloadFolderBySite,
+    downloadFolderBySearch:
+        downloadFolderBySearch ?? this.downloadFolderBySearch,
+    downloadFolderByMediaType:
+        downloadFolderByMediaType ?? this.downloadFolderByMediaType,
     downloadNotificationsEnabled:
         downloadNotificationsEnabled ?? this.downloadNotificationsEnabled,
     downloadNetworkPolicy: downloadNetworkPolicy ?? this.downloadNetworkPolicy,
@@ -395,6 +418,9 @@ class Settings extends Equatable {
       'booruConfigLabelVisibility': booruConfigLabelVisibility.toData(),
       'reduceAnimations': reduceAnimations,
       'downloadFileExistedBehavior': downloadFileExistedBehavior.toData(),
+      'downloadFolderBySite': downloadFolderBySite,
+      'downloadFolderBySearch': downloadFolderBySearch,
+      'downloadFolderByMediaType': downloadFolderByMediaType,
       'downloadNotificationsEnabled': downloadNotificationsEnabled,
       'downloadNetworkPolicy': downloadNetworkPolicy.toData(),
       'downloadSidecarFormat': downloadSidecarFormat.name,
@@ -436,6 +462,9 @@ class Settings extends Equatable {
     booruConfigLabelVisibility,
     reduceAnimations,
     downloadFileExistedBehavior,
+    downloadFolderBySite,
+    downloadFolderBySearch,
+    downloadFolderByMediaType,
     downloadNotificationsEnabled,
     downloadNetworkPolicy,
     downloadSidecarFormat,

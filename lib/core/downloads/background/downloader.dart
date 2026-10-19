@@ -84,7 +84,13 @@ class BackgroundDownloader implements DownloadService {
     }
 
     return _executeDownload(
-      targetDir: targetDir,
+      targetDir: switch ((targetDir, options.folderName)) {
+        (final String dir, final String folder) when folder.isNotEmpty => join(
+          dir,
+          folder,
+        ),
+        (final dir, _) => dir,
+      },
       baseDirectory: baseDirectory,
       options: options,
     );

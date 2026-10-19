@@ -154,6 +154,37 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
             );
           },
         ),
+        KurumiSettingsHeader(
+          label: context.t.settings.download.folders.title,
+        ),
+        KurumiSwitchListTile(
+          title: Text(context.t.settings.download.folders.by_site),
+          subtitle: Text(context.t.settings.download.folders.by_site_example),
+          value: settings.downloadFolderBySite,
+          onChanged: (value) => notifer.updateSettings(
+            settings.copyWith(downloadFolderBySite: value),
+          ),
+        ),
+        KurumiSwitchListTile(
+          title: Text(context.t.settings.download.folders.by_search),
+          subtitle: Text(
+            context.t.settings.download.folders.by_search_example,
+          ),
+          value: settings.downloadFolderBySearch,
+          onChanged: (value) => notifer.updateSettings(
+            settings.copyWith(downloadFolderBySearch: value),
+          ),
+        ),
+        KurumiSwitchListTile(
+          title: Text(context.t.settings.download.folders.by_media_type),
+          subtitle: Text(
+            context.t.settings.download.folders.by_media_type_example,
+          ),
+          value: settings.downloadFolderByMediaType,
+          onChanged: (value) => notifer.updateSettings(
+            settings.copyWith(downloadFolderByMediaType: value),
+          ),
+        ),
         SidecarFormatTile(
           value: settings.downloadSidecarFormat,
           onChanged: (value) => notifer.updateSettings(

@@ -557,6 +557,15 @@
       "select_a_folder": "Select a folder",
       "quality": "Download image quality",
       "skip_existing_files": "Skip existing files",
+      "folders": {
+        "title": "Folders",
+        "by_site": "Folder per site",
+        "by_site_example": "realbooru.com/…",
+        "by_search": "Folder per search",
+        "by_search_example": "…/redhead/… for downloads started from a search",
+        "by_media_type": "Separate images, GIFs and videos",
+        "by_media_type_example": "…/images, …/gifs, …/videos"
+      },
       "skip_existing_files_explanation": "This will prevent downloading files that already exist in the folder. This is useful when you don't want to download the same file multiple times.",
       "network": {
         "title": "Download network",
