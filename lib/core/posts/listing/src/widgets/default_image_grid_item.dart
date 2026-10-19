@@ -183,6 +183,8 @@ class _Image<T extends Post> extends ConsumerWidget {
       placeholderAspectRatio: media.placeholderAspectRatio,
       placeholderFit: media.placeholderFit,
       imageCacheManager: imageCacheManager,
+      loadingIndicator: ImageLoadingIndicator.spinner,
+      retryOnError: true,
     );
   }
 }

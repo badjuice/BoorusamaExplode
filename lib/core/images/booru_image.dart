@@ -2,6 +2,8 @@
 import 'package:cache_manager/cache_manager.dart';
 import 'package:dio/dio.dart';
 import 'package:extended_image/extended_image.dart';
+
+export 'package:extended_image/extended_image.dart' show ImageLoadingIndicator;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foundation/foundation.dart';
 import 'package:kurumi/kurumi.dart';
@@ -41,6 +43,8 @@ class BooruImage extends ConsumerWidget {
     this.placeholderWidget,
     this.controller,
     this.imageCacheManager,
+    this.loadingIndicator = ImageLoadingIndicator.none,
+    this.retryOnError = false,
   });
 
   final BooruConfigAuth config;
@@ -60,6 +64,8 @@ class BooruImage extends ConsumerWidget {
   final Widget? placeholderWidget;
   final ExtendedImageController? controller;
   final ImageCacheManager? imageCacheManager;
+  final ImageLoadingIndicator loadingIndicator;
+  final bool retryOnError;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -122,6 +128,8 @@ class BooruImage extends ConsumerWidget {
       controller: controller,
       androidVersion: deviceInfo.androidDeviceInfo?.version.sdkInt,
       imageCacheManager: imageCacheManager ?? fallbackCacheManager,
+      loadingIndicator: loadingIndicator,
+      retryOnError: retryOnError,
     );
   }
 }
@@ -152,6 +160,8 @@ class BooruRawImage extends StatelessWidget {
     this.controller,
     this.androidVersion,
     this.imageCacheManager,
+    this.loadingIndicator = ImageLoadingIndicator.none,
+    this.retryOnError = false,
   });
 
   final Dio dio;
@@ -177,6 +187,8 @@ class BooruRawImage extends StatelessWidget {
   final ExtendedImageController? controller;
   final int? androidVersion;
   final ImageCacheManager? imageCacheManager;
+  final ImageLoadingIndicator loadingIndicator;
+  final bool retryOnError;
 
   @override
   Widget build(BuildContext context) {
@@ -272,6 +284,8 @@ class BooruRawImage extends StatelessWidget {
                   errorWidget: ErrorPlaceholder(
                     borderRadius: borderRadius,
                   ),
+                  loadingIndicator: loadingIndicator,
+                  retryOnError: retryOnError,
                 )
               : imagePlaceHolder;
         },

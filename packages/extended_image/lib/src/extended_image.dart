@@ -66,6 +66,8 @@ class ExtendedImage extends StatefulWidget {
     this.controller,
     this.placeholderWidget,
     this.errorWidget,
+    this.loadingIndicator = ImageLoadingIndicator.none,
+    this.retryOnError = false,
   }) : assert(constraints == null || constraints.debugAssertIsValid()),
        constraints = (width != null || height != null)
            ? constraints?.tighten(width: width, height: height) ??
@@ -104,6 +106,8 @@ class ExtendedImage extends StatefulWidget {
     this.controller,
     this.placeholderWidget,
     this.errorWidget,
+    this.loadingIndicator = ImageLoadingIndicator.none,
+    this.retryOnError = false,
     TargetPlatform? platform,
     int? androidVersion,
     ImageCacheManager? cacheManager,
@@ -271,6 +275,13 @@ class ExtendedImage extends StatefulWidget {
   final Widget? placeholderWidget;
   final Widget? errorWidget;
 
+  /// Drawn over the placeholder while loading; shows download progress when
+  /// the server reports a content length.
+  final ImageLoadingIndicator loadingIndicator;
+
+  /// Overlays a retry button on the error widget.
+  final bool retryOnError;
+
   @override
   State<ExtendedImage> createState() => _ExtendedImageState();
   @override
@@ -316,7 +327,7 @@ class _ExtendedImageState extends State<ExtendedImage>
     final current = ValueListenableBuilder(
       valueListenable: _controller.loadState,
       builder: (_, state, _) => switch (state) {
-        LoadState.loading || LoadState.cancelled =>
+        LoadState.loading || LoadState.cancelled => _withLoadingIndicator(
           widget.placeholderWidget ??
               Container(
                 width: widget.width,
@@ -329,13 +340,16 @@ class _ExtendedImageState extends State<ExtendedImage>
                 ),
                 child: const SizedBox.shrink(),
               ),
+          state,
+        ),
         LoadState.completed => _getCompletedWidget(),
-        LoadState.failed =>
+        LoadState.failed => _withRetry(
           widget.errorWidget ??
               Container(
                 alignment: Alignment.center,
                 child: const Text('Failed to load image'),
               ),
+        ),
       },
     );
 
@@ -448,6 +462,63 @@ class _ExtendedImageState extends State<ExtendedImage>
         ),
         child: const _RawImage(),
       ),
+    );
+  }
+
+  Widget _withLoadingIndicator(Widget placeholder, LoadState state) {
+    if (widget.loadingIndicator == ImageLoadingIndicator.none ||
+        state == LoadState.cancelled) {
+      return placeholder;
+    }
+
+    final indicator = ValueListenableBuilder(
+      valueListenable: _controller.progress,
+      builder: (_, progress, _) => switch (widget.loadingIndicator) {
+        ImageLoadingIndicator.spinner => Center(
+          child: SizedBox.square(
+            dimension: 18,
+            child: CircularProgressIndicator(
+              value: progress,
+              strokeWidth: 2,
+              color: Colors.white70,
+              backgroundColor: Colors.black26,
+            ),
+          ),
+        ),
+        ImageLoadingIndicator.bar => Align(
+          alignment: Alignment.bottomCenter,
+          child: LinearProgressIndicator(value: progress, minHeight: 2),
+        ),
+        ImageLoadingIndicator.none => const SizedBox.shrink(),
+      },
+    );
+
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        placeholder,
+        Positioned.fill(child: IgnorePointer(child: indicator)),
+      ],
+    );
+  }
+
+  Widget _withRetry(Widget error) {
+    if (!widget.retryOnError) return error;
+
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        error,
+        Positioned.fill(
+          child: Center(
+            child: IconButton.filledTonal(
+              onPressed: _controller.reload,
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Retry',
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -764,3 +835,5 @@ void _print(String message) {
     // debugPrint('[ExtendedImage] $message');
   }
 }
+
+enum ImageLoadingIndicator { none, spinner, bar }
