@@ -11,21 +11,35 @@ class DownloadedPost extends Equatable {
     required this.postId,
     required this.downloadedAt,
     this.filePath,
+    this.thumbnailUrl,
+    this.isVideo = false,
   });
 
   final String siteUrl;
   final int postId;
   final DateTime downloadedAt;
   final String? filePath;
+  final String? thumbnailUrl;
+  final bool isVideo;
 
   DownloadedPostKey get key => (siteUrl: siteUrl, postId: postId);
 
   @override
-  List<Object?> get props => [siteUrl, postId, downloadedAt, filePath];
+  List<Object?> get props => [
+    siteUrl,
+    postId,
+    downloadedAt,
+    filePath,
+    thumbnailUrl,
+    isVideo,
+  ];
 }
 
 abstract interface class DownloadedPostRepository {
   Future<Set<DownloadedPostKey>> getAllKeys();
+
+  /// Newest first.
+  Future<List<DownloadedPost>> getAll();
   Future<void> add(DownloadedPost post);
   Future<void> remove(DownloadedPostKey key);
 }
@@ -35,6 +49,11 @@ class InMemoryDownloadedPostRepository implements DownloadedPostRepository {
 
   @override
   Future<Set<DownloadedPostKey>> getAllKeys() async => _posts.keys.toSet();
+
+  @override
+  Future<List<DownloadedPost>> getAll() async =>
+      _posts.values.toList()
+        ..sort((a, b) => b.downloadedAt.compareTo(a.downloadedAt));
 
   @override
   Future<void> add(DownloadedPost post) async => _posts[post.key] = post;

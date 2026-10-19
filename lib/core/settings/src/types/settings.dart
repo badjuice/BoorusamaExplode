@@ -57,6 +57,7 @@ class Settings extends Equatable {
     required this.downloadFolderBySite,
     required this.downloadFolderBySearch,
     required this.downloadFolderByMediaType,
+    required this.downloadGalleryEnabled,
     required this.downloadNotificationsEnabled,
     required this.downloadNetworkPolicy,
     this.downloadSidecarFormat = SidecarFormat.off,
@@ -137,6 +138,7 @@ class Settings extends Equatable {
       downloadFolderBySite = json['downloadFolderBySite'] ?? true,
       downloadFolderBySearch = json['downloadFolderBySearch'] ?? false,
       downloadFolderByMediaType = json['downloadFolderByMediaType'] ?? false,
+      downloadGalleryEnabled = json['downloadGalleryEnabled'] ?? true,
       swipeAreaToOpenSidebarPercentage =
           json['swipeAreaToOpenSidebarPercentage'] ?? 5,
       autoBackup = AutoBackupSettings.parse(json['autoBackup']),
@@ -204,6 +206,7 @@ class Settings extends Equatable {
     downloadFolderBySite: true,
     downloadFolderBySearch: false,
     downloadFolderByMediaType: false,
+    downloadGalleryEnabled: true,
     downloadNotificationsEnabled: true,
     downloadNetworkPolicy: DownloadNetworkPolicy.defaultValue,
     volumeKeyViewerNavigation: false,
@@ -267,6 +270,7 @@ class Settings extends Equatable {
   final bool downloadFolderBySite;
   final bool downloadFolderBySearch;
   final bool downloadFolderByMediaType;
+  final bool downloadGalleryEnabled;
 
   final bool downloadNotificationsEnabled;
   final SidecarFormat downloadSidecarFormat;
@@ -316,6 +320,7 @@ class Settings extends Equatable {
     bool? downloadFolderBySite,
     bool? downloadFolderBySearch,
     bool? downloadFolderByMediaType,
+    bool? downloadGalleryEnabled,
     bool? downloadNotificationsEnabled,
     DownloadNetworkPolicy? downloadNetworkPolicy,
     SidecarFormat? downloadSidecarFormat,
@@ -371,6 +376,8 @@ class Settings extends Equatable {
         downloadFolderBySearch ?? this.downloadFolderBySearch,
     downloadFolderByMediaType:
         downloadFolderByMediaType ?? this.downloadFolderByMediaType,
+    downloadGalleryEnabled:
+        downloadGalleryEnabled ?? this.downloadGalleryEnabled,
     downloadNotificationsEnabled:
         downloadNotificationsEnabled ?? this.downloadNotificationsEnabled,
     downloadNetworkPolicy: downloadNetworkPolicy ?? this.downloadNetworkPolicy,
@@ -421,6 +428,7 @@ class Settings extends Equatable {
       'downloadFolderBySite': downloadFolderBySite,
       'downloadFolderBySearch': downloadFolderBySearch,
       'downloadFolderByMediaType': downloadFolderByMediaType,
+      'downloadGalleryEnabled': downloadGalleryEnabled,
       'downloadNotificationsEnabled': downloadNotificationsEnabled,
       'downloadNetworkPolicy': downloadNetworkPolicy.toData(),
       'downloadSidecarFormat': downloadSidecarFormat.name,
@@ -465,6 +473,7 @@ class Settings extends Equatable {
     downloadFolderBySite,
     downloadFolderBySearch,
     downloadFolderByMediaType,
+    downloadGalleryEnabled,
     downloadNotificationsEnabled,
     downloadNetworkPolicy,
     downloadSidecarFormat,

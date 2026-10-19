@@ -187,10 +187,10 @@ void _recordOutcome(
   Ref ref,
   DownloadResult result, {
   required String siteUrl,
-  required int postId,
+  required Post post,
 }) {
   final history = ref.read(downloadHistoryProvider.notifier);
-  final key = (siteUrl: siteUrl, postId: postId);
+  final key = (siteUrl: siteUrl, postId: post.id);
 
   unawaited(
     switch (result) {
@@ -199,9 +199,11 @@ void _recordOutcome(
       DownloadSkipped(:final info) => history.markDownloaded(
         DownloadedPost(
           siteUrl: siteUrl,
-          postId: postId,
+          postId: post.id,
           downloadedAt: DateTime.now(),
           filePath: info.path,
+          thumbnailUrl: post.thumbnailImageUrl,
+          isVideo: post.isVideo,
         ),
       ),
       DownloadFailure() => history.clearPending(key),
@@ -351,7 +353,7 @@ Future<DownloadTaskInfo?> _download(
       ref,
       result,
       siteUrl: params.auth.url,
-      postId: downloadable.id,
+      post: downloadable,
     );
 
     ref

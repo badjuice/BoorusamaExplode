@@ -19,6 +19,8 @@ class DownloadedPostRepositorySqlite implements DownloadedPostRepository {
         site_url TEXT NOT NULL,
         post_id INTEGER NOT NULL,
         file_path TEXT,
+        thumbnail_url TEXT,
+        is_video INTEGER NOT NULL DEFAULT 0,
         downloaded_at INTEGER NOT NULL,
         PRIMARY KEY (site_url, post_id)
       );
@@ -40,14 +42,41 @@ class DownloadedPostRepositorySqlite implements DownloadedPostRepository {
   }
 
   @override
+  Future<List<DownloadedPost>> getAll() async {
+    final rows = db.select(
+      'SELECT * FROM $_kTable ORDER BY downloaded_at DESC',
+    );
+
+    return [
+      for (final row in rows)
+        if ((row['site_url'], row['post_id'], row['downloaded_at']) case (
+          final String siteUrl,
+          final int postId,
+          final int downloadedAt,
+        ))
+          DownloadedPost(
+            siteUrl: siteUrl,
+            postId: postId,
+            downloadedAt: DateTime.fromMillisecondsSinceEpoch(downloadedAt),
+            filePath: row['file_path'] as String?,
+            thumbnailUrl: row['thumbnail_url'] as String?,
+            isVideo: row['is_video'] == 1,
+          ),
+    ];
+  }
+
+  @override
   Future<void> add(DownloadedPost post) async {
     db.execute(
       'INSERT OR REPLACE INTO $_kTable '
-      '(site_url, post_id, file_path, downloaded_at) VALUES (?, ?, ?, ?)',
+      '(site_url, post_id, file_path, thumbnail_url, is_video, downloaded_at) '
+      'VALUES (?, ?, ?, ?, ?, ?)',
       [
         post.siteUrl,
         post.postId,
         post.filePath,
+        post.thumbnailUrl,
+        if (post.isVideo) 1 else 0,
         post.downloadedAt.millisecondsSinceEpoch,
       ],
     );

@@ -190,6 +190,8 @@ class _BackgroundDownloadRuntimeState
             postId: postId,
             downloadedAt: DateTime.now(),
             filePath: await task.filePath(),
+            thumbnailUrl: metadata.thumbnailUrl,
+            isVideo: metadata.isVideo,
           ),
         );
       case TaskStatus.failed || TaskStatus.canceled || TaskStatus.notFound:

@@ -18,6 +18,8 @@ import '../../../configs/config/types.dart';
 import '../../../ddos/handler/providers.dart';
 import '../../../downloads/background/types.dart';
 import '../../../http/client/providers.dart';
+import '../../../downloads/history/widgets.dart';
+import '../../../settings/providers.dart';
 import '../../../settings/routes.dart';
 import '../../../widgets/default_selection_bar.dart';
 import '../../../widgets/widgets.dart';
@@ -131,6 +133,15 @@ class _DownloadManagerPageState extends ConsumerState<DownloadManagerPage>
               context.t.download.downloads,
             ),
             actions: [
+              if (isDefaultGroup &&
+                  ref.watch(
+                    settingsProvider.select((s) => s.downloadGalleryEnabled),
+                  ))
+                IconButton(
+                  icon: const Icon(Symbols.photo_library),
+                  tooltip: context.t.download.gallery.title,
+                  onPressed: () => openDownloadsGallery(context),
+                ),
               if (isDefaultGroup)
                 IconButton(
                   icon: const Icon(Icons.settings),

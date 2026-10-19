@@ -783,6 +783,14 @@
     "nothing_to_clear": "Nothing to clear",
     "no_active_sessions": "No active download sessions",
     "nothing_to_show": "Nothing to show, download updates are empty",
+    "gallery": {
+      "title": "Downloaded",
+      "empty": "Nothing downloaded yet",
+      "file_missing": "This file was moved or deleted",
+      "allow_redownload": "Allow downloading again",
+      "setting": "Downloads gallery",
+      "setting_description": "Browse downloaded files from the Downloads page"
+    },
     "notification": {
       "started": "Download started",
       "already_downloaded": "Already downloaded",

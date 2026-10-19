@@ -185,6 +185,14 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
             settings.copyWith(downloadFolderByMediaType: value),
           ),
         ),
+        KurumiSwitchListTile(
+          title: Text(context.t.download.gallery.setting),
+          subtitle: Text(context.t.download.gallery.setting_description),
+          value: settings.downloadGalleryEnabled,
+          onChanged: (value) => notifer.updateSettings(
+            settings.copyWith(downloadGalleryEnabled: value),
+          ),
+        ),
         SidecarFormatTile(
           value: settings.downloadSidecarFormat,
           onChanged: (value) => notifer.updateSettings(
