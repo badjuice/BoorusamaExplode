@@ -1,4 +1,11 @@
 {
+  "navigation_history": {
+    "forward": "Forward",
+    "back": "Back",
+    "home": "Home",
+    "post": "Post",
+    "search": "Search"
+  },
   "generic": {
     "done": "Done",
     "errors": {

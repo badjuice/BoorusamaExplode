@@ -5,6 +5,7 @@ import 'package:kurumi/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 // Project imports:
+import '../../../../navigation/history.dart';
 import '../types/constants.dart';
 import 'booru_search_bar.dart';
 
@@ -104,17 +105,18 @@ class SearchAppBar extends ConsumerWidget {
   }
 }
 
-class SearchAppBarBackButton extends StatelessWidget {
+class SearchAppBarBackButton extends ConsumerWidget {
   const SearchAppBarBackButton({
     super.key,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return IconButton(
       splashRadius: 16,
       icon: const Icon(Symbols.arrow_back),
       onPressed: () => Navigator.of(context).pop(),
+      onLongPress: () => showNavigationHistorySheet(context, ref),
     );
   }
 }

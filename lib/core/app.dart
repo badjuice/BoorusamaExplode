@@ -12,6 +12,7 @@ import 'package:oktoast/oktoast.dart';
 // Project imports:
 import '../foundation/info/app_info.dart';
 import '../foundation/platform.dart';
+import 'navigation/history.dart';
 import 'router.dart';
 import 'settings/providers.dart';
 import 'themes/theme/widgets.dart';
@@ -26,6 +27,8 @@ class BoorusamaCoreApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    // Keeps forward history tracking alive for the whole session.
+    ref.listen(navigationForwardProvider, (_, _) {});
     final toastDuration = ref.watch(toastDurationProvider);
     final appInfo = ref.watch(appInfoProvider);
     final reduceAnimations = ref.watch(
@@ -105,6 +108,10 @@ class BoorusamaCoreApp extends ConsumerWidget {
                           iconTheme: Kurumi.themeOf(context).iconTheme.copyWith(
                             weight: platform == AppPlatform.windows ? 200 : 400,
                           ),
+                          actionIconTheme: ActionIconThemeData(
+                            backButtonIconBuilder: (_) =>
+                                const _BackIconWithHistory(),
+                          ),
                         ),
                         child: AnnotatedRegion(
                           // Needed to make the bottom navigation bar transparent
@@ -148,6 +155,19 @@ class BoorusamaCoreApp extends ConsumerWidget {
           );
         },
       ),
+    );
+  }
+}
+
+// Long-pressing any app bar back button opens the back/forward history.
+class _BackIconWithHistory extends ConsumerWidget {
+  const _BackIconWithHistory();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return GestureDetector(
+      onLongPress: () => showNavigationHistorySheet(context, ref),
+      child: const Icon(Icons.arrow_back),
     );
   }
 }

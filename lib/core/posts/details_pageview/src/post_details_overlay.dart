@@ -1,9 +1,11 @@
 // Package imports:
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kurumi/kurumi.dart';
 import 'package:kurumi/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 // Project imports:
+import '../../../navigation/history.dart';
 import '../../../widgets/widgets.dart';
 import 'post_details_page_view_controller.dart';
 
@@ -78,14 +80,20 @@ class PostDetailsOverlay extends StatelessWidget {
           Flexible(
             child: OverflowBar(
               children: [
-                KurumiCircularIconButton(
-                  icon: const Padding(
-                    padding: EdgeInsets.only(left: 8),
-                    child: Icon(
-                      Symbols.arrow_back_ios,
-                    ),
+                Consumer(
+                  builder: (context, ref, child) => GestureDetector(
+                    onLongPress: () => showNavigationHistorySheet(context, ref),
+                    child: child,
                   ),
-                  onPressed: Navigator.of(context).maybePop,
+                  child: KurumiCircularIconButton(
+                    icon: const Padding(
+                      padding: EdgeInsets.only(left: 8),
+                      child: Icon(
+                        Symbols.arrow_back_ios,
+                      ),
+                    ),
+                    onPressed: Navigator.of(context).maybePop,
+                  ),
                 ),
                 const SizedBox(
                   width: 4,
