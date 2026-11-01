@@ -1,5 +1,4 @@
 import 'package:background_downloader/background_downloader.dart' as bg;
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_symbols_icons/symbols.dart';

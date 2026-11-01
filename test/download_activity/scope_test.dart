@@ -189,6 +189,8 @@ void main() {
         'bulkComplete:bulk-1:4',
       ]),
     );
+    // Let the "downloads finished" toast run its entry animation.
+    await tester.pump(const Duration(milliseconds: 100));
   });
 }
 

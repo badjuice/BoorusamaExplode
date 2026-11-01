@@ -10,6 +10,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:oktoast/oktoast.dart';
 
 // Project imports:
+import 'package:boorusama/core/app.dart' show toastDurationProvider;
 import 'package:boorusama/core/download_activity/activity.dart';
 import 'package:boorusama/core/downloads/background/notification.dart';
 import 'package:boorusama/core/downloads/background/providers.dart';
@@ -42,6 +43,7 @@ class DownloadActivityScopeHarness {
           _permissionManager,
         ),
         appPlatformProvider.overrideWithValue(AppPlatform.unknown),
+        toastDurationProvider.overrideWithValue(Duration.zero),
         ...overrides,
       ],
     );

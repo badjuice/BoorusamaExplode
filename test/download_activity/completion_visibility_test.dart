@@ -75,6 +75,8 @@ void main() {
       harness.clearNotificationEvents();
       await tester.pump();
       expect(harness.notificationEvents, isEmpty);
+      // Let the "downloads finished" toast run its entry animation.
+      await tester.pump(const Duration(milliseconds: 100));
     },
   );
 }
