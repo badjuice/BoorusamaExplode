@@ -26,28 +26,50 @@ void main() {
     (id: 3, ext: '.jpg', tags: '1girl female_focus high_heels'),
   ];
 
-  test('reads tag types and global counts from the search sidebar', () {
-    const sidebar =
-        '<div class="all-tag-container-view">'
-        '<li class="tag-type-copyright"><a href="#">twitter</a> 5107</li>'
-        '<li class="tag-type-metadata"><a href="#">vertical video</a> 6891</li>'
-        '<li class="tag-type-general"><a href="#">redhead</a> 3998</li>'
-        '</div>';
+  String desktopTag(String type, String tag, String label, int count) =>
+      '<li class="tag-type-$type" style="display: block;">&nbsp;'
+      '<a href="javascript:;">+</a>'
+      '&nbsp;<a href="javascript:;">-</a>&nbsp;'
+      '<a href="https://realbooru.com/index.php?page=post&amp;s=list&amp;tags=$tag" >$label</a> $count</li>';
 
-    final tags = parseRbTagsHtml(
-      Response(data: sidebar, requestOptions: RequestOptions()),
-      {},
-    );
+  final sidebars = [
+    (
+      layout: 'mobile',
+      html:
+          '<div class="all-tag-container-view">'
+          '<li class="tag-type-copyright"><a href="#">twitter</a> 5107</li>'
+          '<li class="tag-type-metadata"><a href="#">vertical video</a> 6891</li>'
+          '<li class="tag-type-general"><a href="#">redhead</a> 3998</li>'
+          '</div>',
+    ),
+    (
+      layout: 'desktop',
+      html:
+          '<ul id="tag-sidebar">'
+          '${desktopTag('copyright', 'twitter', 'twitter', 5107)}'
+          '${desktopTag('metadata', 'vertical_video', 'vertical video', 6891)}'
+          '${desktopTag('general', 'redhead', 'redhead', 3998)}'
+          '</ul>',
+    ),
+  ];
 
-    expect(
-      tags.map((t) => (t.name, t.type, t.count)),
-      [
-        ('twitter', 3, 5107),
-        ('vertical_video', 5, 6891),
-        ('redhead', 0, 3998),
-      ],
-    );
-  });
+  for (final s in sidebars) {
+    test('reads tag types and counts from the ${s.layout} search sidebar', () {
+      final tags = parseRbTagsHtml(
+        Response(data: s.html, requestOptions: RequestOptions()),
+        {},
+      );
+
+      expect(
+        tags.map((t) => (t.name, t.type, t.count)),
+        [
+          ('twitter', 3, 5107),
+          ('vertical_video', 5, 6891),
+          ('redhead', 0, 3998),
+        ],
+      );
+    });
+  }
 
   for (final c in cases) {
     test('post ${c.id} gets a ${c.ext} file url and underscored tags', () {

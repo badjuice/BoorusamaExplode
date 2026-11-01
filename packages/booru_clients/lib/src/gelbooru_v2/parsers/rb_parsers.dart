@@ -13,8 +13,10 @@ List<TagDto> parseRbTagsHtml(Response response, Map<String, dynamic> context) {
   final document = parse(html);
 
   // A search for id:<post> lists that post's tags in the sidebar, each with
-  // its global post count; the post page itself has no counts.
+  // its global post count; the post page itself has no counts. Browser user
+  // agents get the mobile layout, anything else the desktop one.
   final sidebarTags = document.querySelectorAll(
+    '#tag-sidebar li[class^="tag-type-"], '
     '.all-tag-container-view li[class^="tag-type-"]',
   );
   if (sidebarTags.isNotEmpty) {
@@ -49,7 +51,18 @@ List<TagDto> parseRbTagsHtml(Response response, Map<String, dynamic> context) {
 }
 
 TagDto? _parseRbSidebarTag(Element li) {
-  final name = li.querySelector('a')?.text.trim().replaceAll(' ', '_');
+  // The desktop layout puts "+" and "-" search links before the tag link.
+  final link =
+      li.querySelectorAll('a[href*="tags="]').lastOrNull ??
+      li.querySelectorAll('a').lastOrNull;
+  final href = link?.attributes['href'];
+  final fromHref = href != null
+      ? Uri.tryParse(href.replaceAll('&amp;', '&'))?.queryParameters['tags']
+      : null;
+  final name = switch (fromHref) {
+    final t? when t.isNotEmpty => t,
+    _ => link?.text.trim().replaceAll(' ', '_'),
+  };
   if (name == null || name.isEmpty) return null;
 
   final type = switch (li.className.replaceFirst('tag-type-', '')) {

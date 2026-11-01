@@ -81,12 +81,15 @@ class _DefaultInheritedTagsTileState<T extends Post>
               post: post,
               tags: post.tags,
               auth: auth,
-              onTagTap: (tag) => widget.onTagTap?.call(
-                Tag.noCount(
-                  name: tag,
-                  category: TagCategory.unknown(),
+              onTagTap: (tag) => switch (widget.onTagTap) {
+                final onTagTap? => onTagTap(
+                  Tag.noCount(
+                    name: tag,
+                    category: TagCategory.unknown(),
+                  ),
                 ),
-              ),
+                null => goToSearchPage(ref, tag: tag),
+              },
             ),
     );
   }
