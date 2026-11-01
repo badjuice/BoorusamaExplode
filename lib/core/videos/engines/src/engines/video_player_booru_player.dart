@@ -274,6 +274,19 @@ class VideoPlayerBooruPlayer implements BooruPlayer {
   );
 
   @override
+  bool get isFullyBuffered => _withValidControllerOr(
+    (controller) => switch ((
+      controller.value.buffered.lastOrNull,
+      controller.value.duration,
+    )) {
+      (final range?, final duration) when duration > Duration.zero =>
+        range.end >= duration - const Duration(milliseconds: 500),
+      _ => false,
+    },
+    false,
+  );
+
+  @override
   bool get hasPlayedOnce => _hasPlayedOnce;
 
   @override

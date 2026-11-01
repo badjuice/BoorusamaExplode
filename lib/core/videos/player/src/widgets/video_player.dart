@@ -463,29 +463,44 @@ class _BooruVideoState extends ConsumerState<BooruVideo> {
     _cacheDelayTimer = Timer(cacheDelay, () {
       if (!mounted || _isDisposing || _cachingUrl != widget.url) return;
 
-      _log(
-        widget.logger?.debug,
-        'Starting background cache for ${widget.url}',
-      );
+      // The cache download fetches the whole file separately; running it while
+      // the player still streams splits the bandwidth and stalls playback.
+      _cacheDelayTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+        if (!mounted || _isDisposing || _cachingUrl != widget.url) {
+          timer.cancel();
+          return;
+        }
+        if (!(_player?.isFullyBuffered ?? false)) return;
 
-      unawaited(
-        cacheManager
-            .cacheVideo(
-              widget.url,
-              headers: widget.headers,
-              fileSize: widget.fileSize,
-            )
-            .catchError(
-              (e) {
-                _log(
-                  widget.logger?.warn,
-                  'Background caching failed for ${widget.url}: $e',
-                );
-                return null;
-              },
-            ),
-      );
+        timer.cancel();
+        _startCaching(cacheManager);
+      });
     });
+  }
+
+  void _startCaching(VideoCacheManager cacheManager) {
+    _log(
+      widget.logger?.debug,
+      'Starting background cache for ${widget.url}',
+    );
+
+    unawaited(
+      cacheManager
+          .cacheVideo(
+            widget.url,
+            headers: widget.headers,
+            fileSize: widget.fileSize,
+          )
+          .catchError(
+            (e) {
+              _log(
+                widget.logger?.warn,
+                'Background caching failed for ${widget.url}: $e',
+              );
+              return null;
+            },
+          ),
+    );
   }
 
   Widget _buildMedia({

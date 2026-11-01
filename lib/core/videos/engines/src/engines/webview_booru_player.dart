@@ -489,6 +489,9 @@ class WebViewBooruPlayer implements BooruPlayer {
   bool get isBuffering => false; // WebView doesn't expose buffering state easily
 
   @override
+  bool get isFullyBuffered => true;
+
+  @override
   bool get hasPlayedOnce => _hasPlayedOnce;
 
   @override

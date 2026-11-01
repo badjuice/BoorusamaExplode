@@ -35,6 +35,10 @@ abstract class BooruPlayer {
   int? get width;
   int? get height;
   bool get isBuffering;
+
+  /// Whether the whole file has been loaded. Engines that can't tell report
+  /// true.
+  bool get isFullyBuffered;
   bool get hasPlayedOnce;
 
   /// Becomes true only after a frame is rendered for the current source.
