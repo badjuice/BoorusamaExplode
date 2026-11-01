@@ -33,7 +33,9 @@ The Android app ID is `org.rdcl.badjuice.boorusamaexplode`, so it installs next 
 - Thumbnails show a loading spinner, and the post viewer a ring with the percentage and size in the middle of the image. A failed image has a retry button.
 - Videos start playing while they load. Upstream started a second full download for its video cache a few seconds after opening a video, which halved the bandwidth for playback; the cache now waits until the player has the whole file.
 - The comment button shows the post's comment count.
-- Errors show a short message, such as "No connection", instead of the raw exception. The debug logs menu has a switch to show the full error and stack trace.
+- The video trackbar shows the loaded part of the file. With the details sheet pulled up, a thin progress line stays on the video. While a video buffers, the current frame stays on screen instead of the preview image. The player's options menu can switch the video engine.
+- Search history is saved even when a search starts before the stored history has loaded. Upstream dropped those entries, and once it had happened the history stopped saving until a restart.
+- Errors show a short message, such as "No connection", instead of the raw exception, with a reload button. The debug logs menu has a switch to show the full error and stack trace.
 - During a call, or when another app plays sound, videos keep playing muted. Settings > Image viewer has two other choices: pause and resume, or keep the sound on. This applies to the default player; upstream plays `.webm` on Android through a WebView, which handles audio its own way.
 
 ## Building

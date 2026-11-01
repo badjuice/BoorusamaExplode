@@ -8,7 +8,11 @@
 - Folders outside Download, Pictures or Documents ask for All files access
 - The viewer shows a loading ring with percent and size in the middle of the image
 - The comment button shows how many comments a post has
-- Errors show a short message such as "No connection"; details can be turned on from the debug logs menu
+- Errors show a short message such as "No connection" with a reload button; details can be turned on from the debug logs menu
+- Search history is saved reliably
+- The video trackbar shows how much has loaded, and a thin progress line stays visible when the details sheet is open
+- While a video buffers, the current frame stays on screen instead of the preview image
+- The video player's options menu can switch the video engine
 - Leaving tag selection returns straight to the post
 - Settings link to this fork's repository, issues and email
 
