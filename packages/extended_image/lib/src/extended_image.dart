@@ -489,6 +489,13 @@ class _ExtendedImageState extends State<ExtendedImage>
           alignment: Alignment.bottomCenter,
           child: LinearProgressIndicator(value: progress, minHeight: 2),
         ),
+        ImageLoadingIndicator.ring => Center(
+          child: _LoadingRing(
+            progress: progress,
+            loaded: _controller.cumulativeBytesLoaded,
+            total: _controller.expectedTotalBytes,
+          ),
+        ),
         ImageLoadingIndicator.none => const SizedBox.shrink(),
       },
     );
@@ -836,4 +843,82 @@ void _print(String message) {
   }
 }
 
-enum ImageLoadingIndicator { none, spinner, bar }
+enum ImageLoadingIndicator { none, spinner, bar, ring }
+
+class _LoadingRing extends StatelessWidget {
+  const _LoadingRing({
+    required this.progress,
+    required this.loaded,
+    required this.total,
+  });
+
+  final double? progress;
+  final int? loaded;
+  final int? total;
+
+  @override
+  Widget build(BuildContext context) {
+    const textColor = Colors.white;
+    final size = switch ((loaded, total)) {
+      (final l?, final t?) when t > 0 =>
+        '${_formatBytes(l)} / ${_formatBytes(t)}',
+      (final l?, _) when l > 0 => _formatBytes(l),
+      _ => null,
+    };
+
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: Colors.black45,
+        shape: BoxShape.circle,
+      ),
+      child: SizedBox.square(
+        dimension: 88,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: CircularProgressIndicator(
+                  value: progress,
+                  strokeWidth: 3,
+                  color: Colors.white,
+                  backgroundColor: Colors.white24,
+                ),
+              ),
+            ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Fixed slots so the ring's text doesn't jump as values change.
+                Text(
+                  progress != null ? '${(progress! * 100).round()}%' : '',
+                  style: const TextStyle(
+                    color: textColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
+                ),
+                Text(
+                  size ?? '',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 9,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _formatBytes(int bytes) => switch (bytes) {
+  < 1024 => '$bytes B',
+  < 1024 * 1024 => '${(bytes / 1024).toStringAsFixed(0)} KB',
+  _ => '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB',
+};
