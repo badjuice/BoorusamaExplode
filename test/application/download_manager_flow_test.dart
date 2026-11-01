@@ -12,6 +12,7 @@ import 'package:boorusama/core/download_manager/src/providers/internal_providers
 import 'package:boorusama/core/download_manager/src/widgets/simple_download_tile.dart';
 import 'package:boorusama/core/download_manager/types.dart';
 import 'package:boorusama/core/downloads/downloader/providers.dart';
+import 'package:boorusama/core/downloads/history/providers.dart';
 import 'package:boorusama/core/home/src/widgets/home_search_bar.dart';
 import 'package:boorusama/core/http/client/providers.dart';
 import 'package:boorusama/core/posts/details/widgets.dart';
@@ -240,6 +241,12 @@ void main() {
     await flow.driver.goBack();
     await flow.enqueuePost(102);
     await flow.driver.goBack();
+    // A post already queued is skipped; forgetting it allows a second task.
+    await ProviderScope.containerOf(
+          tester.element(find.byType(HomeSearchBar).first),
+        )
+        .read(downloadHistoryProvider.notifier)
+        .forget((siteUrl: flow.backend.config.url, postId: 101));
     await flow.enqueuePost(101);
     expect(flow.downloads.taskIds.toSet(), hasLength(3));
 
@@ -438,5 +445,9 @@ final class _DownloadFlow {
       () => container.read(downloadFilterProvider(page.filter)) == filter,
       description: 'download filter $filter to be selected',
     );
+    // Let the tab view finish sliding so its rows are on screen.
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
   }
 }
