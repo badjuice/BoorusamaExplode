@@ -42,4 +42,55 @@ void main() {
       ],
     );
   });
+
+  final lateArrivals = [
+    (
+      name: 'progress after completion keeps the task completed',
+      updates: [TaskStatus.complete, 0.9],
+      tab: 'completed',
+    ),
+    (
+      name: 'enqueued after progress keeps the task in progress',
+      updates: [0.3, TaskStatus.enqueued],
+      tab: 'inProgress',
+    ),
+    (
+      name: 'a retry after failure moves the task back to pending',
+      updates: [TaskStatus.failed, TaskStatus.enqueued],
+      tab: 'pending',
+    ),
+    (
+      name: 'a running task is listed in progress before any progress',
+      updates: [TaskStatus.enqueued, TaskStatus.running],
+      tab: 'inProgress',
+    ),
+  ];
+
+  for (final c in lateArrivals) {
+    test(c.name, () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final task = DownloadTask(taskId: 'task-1', url: 'https://file.test/1');
+      final notifier = container.read(downloadTaskUpdatesProvider.notifier);
+
+      for (final u in c.updates) {
+        notifier.addOrUpdate(switch (u) {
+          final TaskStatus s => TaskStatusUpdate(task, s),
+          final double p => TaskProgressUpdate(task, p),
+          _ => throw ArgumentError(u),
+        });
+      }
+
+      final state = container.read(downloadTaskUpdatesProvider);
+      final tabs = {
+        'pending': state.pending(task.group),
+        'inProgress': state.inProgress(task.group),
+        'completed': state.completed(task.group),
+      };
+      expect(
+        tabs.entries.where((e) => e.value.isNotEmpty).map((e) => e.key),
+        [c.tab],
+      );
+    });
+  }
 }

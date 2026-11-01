@@ -6,6 +6,7 @@ import '../../../../../foundation/filesystem.dart';
 import '../../../../../foundation/info/device_info.dart';
 import '../../../../../foundation/loggers.dart';
 import '../../../../configs/config/types.dart';
+import '../../../../download_manager/providers.dart';
 import '../../../../videos/cache/providers.dart';
 import '../../../background/factory.dart';
 import '../../../sidecar/providers.dart';
@@ -37,6 +38,8 @@ final downloadServiceProvider = Provider<DownloadService>(
             (value) => value.androidDeviceInfo?.version.sdkInt,
           ),
         ),
+        publishTaskUpdate: (update) =>
+            ref.read(downloadTaskEventIngressProvider).publish(update),
       ),
     );
     ref.onDispose(() => factory.dispose(service));

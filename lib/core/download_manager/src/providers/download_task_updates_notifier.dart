@@ -66,6 +66,19 @@ final class DownloadTaskEventIngress {
   }
 }
 
+/// Status updates can be published after later progress updates because
+/// their handling awaits sidecar and protection work. A retry always starts
+/// with a fresh enqueued status, so these never hide a real transition.
+bool isStaleTaskUpdate({
+  required TaskUpdate current,
+  required TaskUpdate next,
+}) => switch ((current, next)) {
+  (TaskStatusUpdate(:final status), TaskProgressUpdate()) =>
+    status.isFinalState,
+  (TaskProgressUpdate(), TaskStatusUpdate(status: TaskStatus.enqueued)) => true,
+  _ => false,
+};
+
 extension TaskX on Task {
   bool get isDefaultGroup => group == FileDownloader.defaultGroup;
 }
@@ -116,6 +129,8 @@ class DownloadTaskUpdatesNotifier extends Notifier<DownloadTaskUpdateState> {
 
     if (index == -1) {
       updates.add(update);
+    } else if (isStaleTaskUpdate(current: updates[index], next: update)) {
+      return;
     } else {
       updates[index] = update;
     }

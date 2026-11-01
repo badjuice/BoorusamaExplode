@@ -1,4 +1,5 @@
 // Dart imports:
+import 'dart:async';
 import 'dart:io';
 
 // Package imports:
@@ -23,6 +24,7 @@ class BackgroundDownloader implements DownloadService {
     this.logger,
     required this.fs,
     required this.sidecarStore,
+    this.publishTaskUpdate,
   });
 
   final VideoCacheManager? videoCacheManager;
@@ -30,6 +32,7 @@ class BackgroundDownloader implements DownloadService {
   final Logger? logger;
   final AppFileSystem fs;
   final Future<SidecarStore> sidecarStore;
+  final void Function(TaskUpdate update)? publishTaskUpdate;
 
   @override
   Future<DownloadResult> download(DownloadOptions options) async {
@@ -159,6 +162,7 @@ class BackgroundDownloader implements DownloadService {
         options: options,
       );
       if (cacheResult case final result?) {
+        if (result is DownloadCompleted) _recordCopiedTask(task);
         if (sidecars != null) {
           if (result case DownloadCompleted(:final info)) {
             try {
@@ -207,6 +211,23 @@ class BackgroundDownloader implements DownloadService {
         ),
       );
     }
+  }
+
+  void _recordCopiedTask(DownloadTask task) {
+    final publish = publishTaskUpdate;
+    if (publish == null) return;
+
+    publish(TaskStatusUpdate(task, TaskStatus.complete));
+    unawaited(
+      FileDownloader().database
+          .updateRecord(TaskRecord(task, TaskStatus.complete, 1, -1))
+          .catchError(
+            (Object error) => logger?.error(
+              'BackgroundDownloader',
+              'Recording cached copy failed: ${error.runtimeType}',
+            ),
+          ),
+    );
   }
 
   Future<DownloadResult?> _tryDownloadFromCache({

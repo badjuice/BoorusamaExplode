@@ -38,11 +38,35 @@ class BackgroundDownloadRuntime extends ConsumerStatefulWidget {
 class _BackgroundDownloadRuntimeState
     extends ConsumerState<BackgroundDownloadRuntime> {
   final _attempts = <String, ProtectionAttempt>{};
+  final _extensionRetries = <String, int>{};
 
   late StreamSubscription<TaskUpdate> downloadUpdates;
 
   Future<void> _update(TaskUpdate update) async {
-    if (update case TaskStatusUpdate()) {
+    if (update case final TaskStatusUpdate status) {
+      try {
+        // A retry replaces this update with the ones of the retried task.
+        if (await _handleStatus(status)) return;
+      } catch (error) {
+        ref
+            .read(loggerProvider)
+            .error(
+              'Download',
+              'Status handling failed: ${error.runtimeType}',
+              sensitiveMessage: error.toString(),
+            );
+      }
+    }
+
+    ref.read(downloadTaskEventIngressProvider).publish(update);
+
+    if (update case TaskStatusUpdate(:final task, :final status)) {
+      unawaited(_recordHistory(task, status));
+    }
+  }
+
+  Future<bool> _handleStatus(TaskStatusUpdate update) async {
+    {
       // Includes undelivered native completion updates replayed after restart.
       // The headless callback handles completion while the app is not running.
       try {
@@ -106,7 +130,13 @@ class _BackgroundDownloadRuntimeState
         try {
           final config = ref.readConfigAuth;
 
-          if (config.booruType.hasUnknownFullImageUrl) {
+          final tried = _extensionRetries.update(
+            update.task.taskId,
+            (n) => n + 1,
+            ifAbsent: () => 1,
+          );
+
+          if (config.booruType.hasUnknownFullImageUrl && tried <= 3) {
             willRetry = true;
             await Future<void>.delayed(const Duration(seconds: 1));
             final ext = path.extension(update.task.url);
@@ -131,7 +161,7 @@ class _BackgroundDownloadRuntimeState
           willRetry = false;
         }
 
-        if (willRetry) return;
+        if (willRetry) return true;
       } else if (update.status == TaskStatus.failed) {
         final handled = await ref
             .read(httpDdosProtectionBypassProvider)
@@ -152,7 +182,7 @@ class _BackgroundDownloadRuntimeState
             );
             attempt.record(RetryEnqueued(enqueued));
             if (!enqueued) _attempts.remove(update.task.taskId);
-            return;
+            return true;
           } catch (error) {
             attempt.record(
               ProtectionOperationFailed(
@@ -165,14 +195,15 @@ class _BackgroundDownloadRuntimeState
           }
         }
       }
-      if (update.status.isFinalState) _attempts.remove(update.task.taskId);
+      if (update.status.isFinalState) {
+        _attempts.remove(update.task.taskId);
+        if (update.status != TaskStatus.notFound) {
+          _extensionRetries.remove(update.task.taskId);
+        }
+      }
     }
 
-    ref.read(downloadTaskEventIngressProvider).publish(update);
-
-    if (update case TaskStatusUpdate(:final task, :final status)) {
-      unawaited(_recordHistory(task, status));
-    }
+    return false;
   }
 
   Future<void> _recordHistory(Task task, TaskStatus status) async {
@@ -234,13 +265,18 @@ class _BackgroundDownloadRuntimeState
     try {
       await FileDownloader().trackTasks();
       final records = await FileDownloader().database.allRecords();
+      final active = await FileDownloader().allTasks(allGroups: true);
       if (!mounted) return;
 
-      ref
-          .read(downloadTaskUpdatesProvider.notifier)
-          .restore(
-            records.map((r) => TaskStatusUpdate(r.task, r.status, r.exception)),
-          );
+      // Records left running or enqueued by a killed session are stale unless
+      // the downloader still holds the task.
+      ref.read(downloadTaskUpdatesProvider.notifier).restore([
+        for (final r in records)
+          if (r.status.isFinalState || r.status == TaskStatus.paused)
+            TaskStatusUpdate(r.task, r.status, r.exception)
+          else if (active.contains(r.task))
+            TaskStatusUpdate(r.task, TaskStatus.enqueued),
+      ]);
     } catch (error) {
       ref
           .read(loggerProvider)

@@ -1,4 +1,5 @@
 // Package imports:
+import 'package:background_downloader/background_downloader.dart';
 import 'package:cache_manager/cache_manager.dart';
 
 // Project imports:
@@ -14,6 +15,7 @@ final class DownloadServiceDependencies {
     required this.sidecarStore,
     required this.videoCacheManager,
     required this.androidSdkInt,
+    this.publishTaskUpdate,
   });
 
   final AppFileSystem? fileSystem;
@@ -21,6 +23,10 @@ final class DownloadServiceDependencies {
   final Future<SidecarStore>? sidecarStore;
   final VideoCacheManager? videoCacheManager;
   final int? androidSdkInt;
+
+  /// Reports downloads finished without a native task, such as copies from
+  /// the video cache, so the download manager can list them.
+  final void Function(TaskUpdate update)? publishTaskUpdate;
 }
 
 abstract interface class DownloadServiceFactory {

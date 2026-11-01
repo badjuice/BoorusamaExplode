@@ -53,8 +53,16 @@ extension DownloadTaskStateX on DownloadTaskUpdateState {
           .where((e) => e.status == TaskStatus.complete)
           .toList();
 
-  List<TaskUpdate> inProgress(String group) =>
-      all(group).whereType<TaskProgressUpdate>().toList();
+  // A task reports running before its first progress update arrives.
+  List<TaskUpdate> inProgress(String group) => all(group)
+      .where(
+        (e) => switch (e) {
+          TaskProgressUpdate() => true,
+          TaskStatusUpdate(:final status) =>
+            status == TaskStatus.running || status == TaskStatus.waitingToRetry,
+        },
+      )
+      .toList();
 
   List<TaskUpdate> pending(String group) =>
       all(group)

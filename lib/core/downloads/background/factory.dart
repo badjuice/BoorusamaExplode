@@ -13,6 +13,7 @@ final class BackgroundDownloadServiceFactory implements DownloadServiceFactory {
         fs: dependencies.fileSystem!,
         sidecarStore: dependencies.sidecarStore!,
         androidSdkInt: dependencies.androidSdkInt,
+        publishTaskUpdate: dependencies.publishTaskUpdate,
       );
 
   @override
