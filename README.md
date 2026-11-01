@@ -10,7 +10,7 @@ The Android app ID is `org.rdcl.badjuice.boorusamaexplode`, so it installs next 
 
 ### Realbooru
 - Comments load from the post page. Realbooru's API returns "API offline" for every request, so the upstream comment fetch always came back empty.
-- Tags on the post page show post counts, read from the sidebar of an `id:<post>` search.
+- Tags on the post page show post counts, read from the sidebar of an `id:<post>` search. Realbooru sends browsers a mobile layout and other clients a desktop one; both are parsed.
 - List pages give tags as `tag one, tag two`. Upstream split them on spaces, which turned `big ass` into `big` and `ass,`.
 - Thumbnails mark videos and GIFs. The list page has no file extension, so videos are detected by the blue thumbnail border or a `video`/`webm` tag, and GIFs by the `animated_gif` tag.
 - You can swipe between posts. Each post page is fetched as you reach it; until then the thumbnail shows with a spinner, or a retry button if the fetch fails.
@@ -21,13 +21,19 @@ The Android app ID is `org.rdcl.badjuice.boorusamaexplode`, so it installs next 
 - Downloaded posts get a badge on the thumbnail, and the download button turns into a check mark.
 - Download history survives an app restart.
 - Download manager tabs switch by swiping and show a count each.
-- Files go in a folder per site by default (`Download/realbooru.com/`). Settings has switches for a folder per search and for separate `images`, `gifs` and `videos` folders.
+- Files go to `Pictures/BoorusamaExplode/` by default, in a folder per site (`Pictures/BoorusamaExplode/realbooru.com/`). The first download asks whether to keep that folder. Settings has switches for a folder per search and for separate `images`, `gifs` and `videos` folders.
+- A folder outside `Download`, `Pictures` or `Documents` needs Android's "All files access" on Android 11 and later; the app asks for it when you pick one.
+- The download button shows a ring with the real progress, and a filled check once the file is saved. Thumbnails show the same progress. A toast appears when a download is queued and when it finishes.
+- The download manager menu can retry every failed download, clear completed ones, or clear failed and canceled ones. Not-found and canceled downloads have a retry button.
 - The Downloads page has a gallery of downloaded files, with an option to download a missing file again.
 
 ### Viewing
 - Losing the connection no longer wipes open pages. Upstream swapped the widget above the app's navigator when the network dropped, so every page rebuilt and the post viewer showed "Invalid context: null". A small "Network unavailable" pill now appears at the bottom instead.
 - Long-press a back button to jump several pages back, or forward to a page you just left.
-- Thumbnails show a loading spinner and the post viewer a thin progress bar, with a retry button when an image fails.
+- Thumbnails show a loading spinner, and the post viewer a ring with the percentage and size in the middle of the image. A failed image has a retry button.
+- Videos start playing while they load. Upstream started a second full download for its video cache a few seconds after opening a video, which halved the bandwidth for playback; the cache now waits until the player has the whole file.
+- The comment button shows the post's comment count.
+- Errors show a short message, such as "No connection", instead of the raw exception. The debug logs menu has a switch to show the full error and stack trace.
 - During a call, or when another app plays sound, videos keep playing muted. Settings > Image viewer has two other choices: pause and resume, or keep the sound on. This applies to the default player; upstream plays `.webm` on Android through a WebView, which handles audio its own way.
 
 ## Building

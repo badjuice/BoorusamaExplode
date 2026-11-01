@@ -1,9 +1,15 @@
 # 0.3.0
 - [Realbooru] Tags are colored and grouped again, show post counts, and open a search when tapped
 - Videos play while they load; the video cache no longer downloads the same file in parallel
-- The download manager shows queued, running and finished downloads correctly
+- The download manager shows queued, running and finished downloads correctly, with retry and clear actions
+- The download button shows a progress ring and a filled check when done; thumbnails show progress too
+- Toasts when a download is queued and when it finishes
 - Downloads go to Pictures/BoorusamaExplode by default, and the first download asks where to save
 - Folders outside Download, Pictures or Documents ask for All files access
+- The viewer shows a loading ring with percent and size in the middle of the image
+- The comment button shows how many comments a post has
+- Errors show a short message such as "No connection"; details can be turned on from the debug logs menu
+- Leaving tag selection returns straight to the post
 - Settings link to this fork's repository, issues and email
 
 # 0.1.0
