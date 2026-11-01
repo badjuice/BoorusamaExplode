@@ -9,7 +9,6 @@ import 'package:boorusama/core/download_manager/providers.dart';
 import 'package:boorusama/core/download_manager/src/l10n.dart';
 import 'package:boorusama/core/download_manager/src/pages/download_manager_page.dart';
 import 'package:boorusama/core/download_manager/src/providers/internal_providers.dart';
-import 'package:boorusama/core/download_manager/src/widgets/download_filter_options.dart';
 import 'package:boorusama/core/download_manager/src/widgets/simple_download_tile.dart';
 import 'package:boorusama/core/download_manager/types.dart';
 import 'package:boorusama/core/downloads/downloader/providers.dart';
@@ -420,32 +419,27 @@ final class _DownloadFlow {
   );
 
   Future<void> selectFilter(DownloadFilter filter) async {
-    final options = find.byType(DownloadFilterOptions);
-    await harness.pumpUntilFound(tester, options);
-    final label = filter.localize(tester.element(options));
-    final chip = find.descendant(
-      of: options,
-      matching: find.bySemanticsLabel(label),
-    );
-    final row = find.descendant(of: options, matching: find.byType(Scrollable));
+    final tabBar = find.byType(TabBar);
+    await harness.pumpUntilFound(tester, tabBar);
+    final label = filter.localize(tester.element(tabBar));
+    final tab = find.descendant(of: tabBar, matching: find.text(label));
 
-    // Rewind the chip row so the target is always reached by scrolling forward.
-    await tester.fling(row.first, const Offset(2000, 0), 5000);
-    await tester.pump(const Duration(milliseconds: 400));
     await tester.scrollUntilVisible(
-      chip.hitTestable(),
+      tab.hitTestable(),
       150,
-      scrollable: row.first,
+      scrollable: find
+          .descendant(of: tabBar, matching: find.byType(Scrollable))
+          .first,
     );
-    await tester.tap(chip.hitTestable());
+    await tester.tap(tab.hitTestable());
 
-    final optionsWidget = tester.widget<DownloadFilterOptions>(options);
-    final container = ProviderScope.containerOf(tester.element(options));
+    final page = tester.widget<DownloadManagerPage>(
+      find.byType(DownloadManagerPage),
+    );
+    final container = ProviderScope.containerOf(tester.element(tabBar));
     await harness.pumpUntil(
       tester,
-      () =>
-          container.read(downloadFilterProvider(optionsWidget.filter)) ==
-          filter,
+      () => container.read(downloadFilterProvider(page.filter)) == filter,
       description: 'download filter $filter to be selected',
     );
   }
