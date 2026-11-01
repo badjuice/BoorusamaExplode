@@ -30,4 +30,5 @@ class AboutPage extends ConsumerWidget {
 }
 
 String _legaleseFromAppInfo(AppInfo appInfo) =>
-    '\u{a9} ${appInfo.copyrightYearRange.start}-${appInfo.copyrightYearRange.end} ${appInfo.author}';
+    'A fork of Boorusama, \u{a9} ${appInfo.copyrightYearRange.start}-${appInfo.copyrightYearRange.end} ${appInfo.author}.\n'
+    'Fork: ${appInfo.githubUrl}';

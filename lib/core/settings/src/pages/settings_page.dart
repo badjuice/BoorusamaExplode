@@ -851,13 +851,14 @@ class _Footer extends ConsumerWidget {
             ),
             icon: const FaIcon(FontAwesomeIcons.squareGithub),
           ),
-          IconButton(
-            onPressed: () => launchExternalUrl(
-              Uri.parse(ref.read(appInfoProvider).discordUrl),
-              launcher: ref.read(externalUrlLauncherProvider),
+          if (ref.watch(appInfoProvider).discordUrl.isNotEmpty)
+            IconButton(
+              onPressed: () => launchExternalUrl(
+                Uri.parse(ref.read(appInfoProvider).discordUrl),
+                launcher: ref.read(externalUrlLauncherProvider),
+              ),
+              icon: const FaIcon(FontAwesomeIcons.discord),
             ),
-            icon: const FaIcon(FontAwesomeIcons.discord),
-          ),
         ],
       ),
     );

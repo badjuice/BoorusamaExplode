@@ -1,3 +1,21 @@
+# 0.1.1
+- [Realbooru] Tags are colored and grouped again, show post counts, and open a search when tapped
+- Videos play while they load; the video cache no longer downloads the same file in parallel
+- The download manager shows queued, running and finished downloads correctly
+- Downloads go to Pictures/BoorusamaExplode by default, and the first download asks where to save
+- Folders outside Download, Pictures or Documents ask for All files access
+- Settings link to this fork's repository, issues and email
+
+# 0.1.0
+- First release of the BoorusamaExplode fork, based on Boorusama 4.6.1
+- [Realbooru] Comments, tag counts, swiping between posts, video and GIF badges
+- Bulk downloads resolve the real file URL, skip duplicates and keep a history
+- Optional download folders per site, search and media type, and a gallery of downloads
+- Loading progress and retry on images, offline indicator, long-press back for history
+- Videos keep playing muted during calls
+
+The entries below are from upstream Boorusama.
+
 # 4.6.1
 - Add PIN app lock and app-preview blur for privacy
 - Add an option to download only over Wi-Fi
