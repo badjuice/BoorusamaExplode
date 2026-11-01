@@ -27,9 +27,21 @@ class NavigationForwardNotifier extends Notifier<List<RouteMatchList>> {
     final delegate = ref.watch(routerProvider).routerDelegate;
     _last = delegate.currentConfiguration;
 
-    void listener() => _onChanged(delegate.currentConfiguration);
+    // The delegate also notifies while the router builds its pages, and a
+    // provider can't change during a build.
+    var disposed = false;
+    void listener() {
+      final current = delegate.currentConfiguration;
+      Future.microtask(() {
+        if (!disposed) _onChanged(current);
+      });
+    }
+
     delegate.addListener(listener);
-    ref.onDispose(() => delegate.removeListener(listener));
+    ref.onDispose(() {
+      disposed = true;
+      delegate.removeListener(listener);
+    });
 
     return const [];
   }
@@ -45,14 +57,14 @@ class NavigationForwardNotifier extends Notifier<List<RouteMatchList>> {
       return;
     }
 
-    state = switch (_compare(previous, current)) {
-      _StackChange.popped => [
-        previous,
-        ...state,
-      ].take(_kMaxForwardEntries).toList(),
-      _StackChange.same => state,
-      _StackChange.navigated => const [],
-    };
+    switch (_compare(previous, current)) {
+      case _StackChange.popped:
+        state = [previous, ...state].take(_kMaxForwardEntries).toList();
+      case _StackChange.navigated when state.isNotEmpty:
+        state = const [];
+      case _StackChange.navigated || _StackChange.same:
+        break;
+    }
   }
 
   void goForward(int index) {
