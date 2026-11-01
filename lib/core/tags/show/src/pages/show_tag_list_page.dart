@@ -7,6 +7,7 @@ import 'package:kurumi/material.dart';
 // Project imports:
 import '../../../../blacklists/providers.dart';
 import '../../../../configs/config/types.dart';
+import '../../../../errors/widgets.dart';
 import '../../../../posts/post/types.dart';
 import '../../../favorites/providers.dart';
 import '../../../tag/types.dart';
@@ -116,9 +117,13 @@ class _ShowTagListPageState extends ConsumerState<ShowTagListPage> {
                     contextMenuBuilder: widget.contextMenuBuilder,
                   ),
             error: (error, stack) => Center(
-              child: Text(
-                context.t.tags.loading_tags_error(error: error),
-                style: textTheme.bodyLarge,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: ErrorText(
+                  error: error,
+                  stackTrace: stack,
+                  style: textTheme.bodyLarge,
+                ),
               ),
             ),
             loading: ShowTagListPlaceholder.new,

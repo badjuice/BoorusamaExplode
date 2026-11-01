@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 
 // Project imports:
 import '../../../configs/config/providers.dart';
+import '../../../errors/widgets.dart';
 import '../../../images/booru_image.dart';
 import '../../../videos/engines/types.dart';
 import '../../../videos/player/providers.dart';
@@ -65,7 +66,9 @@ class DownloadsGalleryPage extends ConsumerWidget {
             ),
           ),
         ),
-        AsyncError(:final error) => Center(child: Text(error.toString())),
+        AsyncError(:final error, :final stackTrace) => Center(
+          child: ErrorText(error: error, stackTrace: stackTrace),
+        ),
         _ => const Center(child: CircularProgressIndicator()),
       },
     );

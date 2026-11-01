@@ -11,7 +11,10 @@
     "errors": {
       "no_data": "No data available",
       "unknown": "Something went wrong",
-      "error": "Error"
+      "error": "Error",
+      "no_connection": "No connection",
+      "show_details": "Show error details",
+      "hide_details": "Hide error details"
     },
     "action": {
       "add": "Add",

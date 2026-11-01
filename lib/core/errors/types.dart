@@ -2,9 +2,11 @@
 import 'package:flutter/widgets.dart';
 
 // Package imports:
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:i18n/i18n.dart';
 
 // Project imports:
+import '../settings/providers.dart';
 import 'error.dart';
 
 export 'error.dart';
@@ -21,7 +23,12 @@ class DefaultAppErrorTranslator implements AppErrorTranslator {
     AppError error,
   ) => switch (error.type) {
     AppErrorType.cannotReachServer =>
-      '${context.t.search.errors.cannot_reach_server}\n\n${error.message}',
+      ProviderScope.containerOf(
+            context,
+            listen: false,
+          ).read(settingsProvider).showErrorDetails
+          ? '${context.t.search.errors.cannot_reach_server}\n\n${error.message}'
+          : context.t.search.errors.cannot_reach_server,
     AppErrorType.handshakeFailed => context.t.search.errors.handshake_failed,
     AppErrorType.certificateError => context.t.search.errors.certificate_error,
     AppErrorType.loadDataFromServerFailed =>

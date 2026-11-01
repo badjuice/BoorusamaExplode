@@ -4,6 +4,7 @@ import 'package:kurumi/kurumi.dart';
 import 'package:kurumi/material.dart';
 
 // Project imports:
+import '../../../errors/widgets.dart';
 import '../widgets/comment_composer.dart';
 
 enum CommentThreadScrollTarget {
@@ -180,7 +181,7 @@ class _CommentThreadPageScaffoldState<T>
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Text(error.toString()),
+          child: ErrorText(error: error),
         ),
       );
     }

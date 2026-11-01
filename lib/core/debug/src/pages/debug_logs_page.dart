@@ -76,6 +76,23 @@ class _DebugLogsPageState extends ConsumerState<DebugLogsPage> {
             items: [
               KurumiPopupMenuItem(
                 title: Text(
+                  ref.watch(settingsProvider.select((s) => s.showErrorDetails))
+                      ? context.t.generic.errors.hide_details
+                      : context.t.generic.errors.show_details,
+                ),
+                onTap: () {
+                  final settings = ref.read(settingsProvider);
+                  ref
+                      .read(settingsNotifierProvider.notifier)
+                      .updateSettings(
+                        settings.copyWith(
+                          showErrorDetails: !settings.showErrorDetails,
+                        ),
+                      );
+                },
+              ),
+              KurumiPopupMenuItem(
+                title: Text(
                   redactSensitiveDetails
                       ? 'Include sensitive details'.hc
                       : 'Redact sensitive details'.hc,

@@ -47,11 +47,26 @@ class _ShowTagListPageScaffoldState
     _selectionModeController = SelectionModeController(
       initialEnabled: widget.initiallyMultiSelectEnabled,
     );
+
+    // Opened from "Select": leaving selection goes straight back to the post
+    // instead of stopping on the plain tag list.
+    if (widget.initiallyMultiSelectEnabled) {
+      _selectionModeController.addListener(_closeWhenSelectionEnds);
+    }
+  }
+
+  void _closeWhenSelectionEnds() {
+    if (_selectionModeController.isActive || !mounted) return;
+
+    _selectionModeController.removeListener(_closeWhenSelectionEnds);
+    Navigator.of(context).maybePop();
   }
 
   @override
   void dispose() {
-    _selectionModeController.dispose();
+    _selectionModeController
+      ..removeListener(_closeWhenSelectionEnds)
+      ..dispose();
 
     super.dispose();
   }
