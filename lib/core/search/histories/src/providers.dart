@@ -65,9 +65,9 @@ class SearchHistoryNotifier extends AsyncNotifier<SearchHistoryState> {
     // ignore empty history
     if (history.trim().isEmpty) return;
 
-    final currentState = state.value;
-
-    if (currentState == null) return;
+    // A search can start before the stored history has loaded; dropping the
+    // entry then is what kept searches from being remembered.
+    final currentState = await future;
 
     final config = ref.readConfigAuth;
 
@@ -90,9 +90,7 @@ class SearchHistoryNotifier extends AsyncNotifier<SearchHistoryState> {
   }
 
   Future<void> removeHistory(SearchHistory history) async {
-    final currentState = state.value;
-
-    if (currentState == null) return;
+    final currentState = await future;
 
     final repo = await ref.read(searchHistoryRepoProvider.future);
 
@@ -127,8 +125,6 @@ class SearchHistoryNotifier extends AsyncNotifier<SearchHistoryState> {
     final query = state.value?.currentQuery ?? '';
 
     if (query.isEmpty) return;
-
-    state = const AsyncLoading();
 
     filterHistories('');
   }
