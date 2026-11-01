@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foundation/foundation.dart';
 import 'package:foundation/widgets.dart';
+import 'package:kurumi/kurumi.dart';
 import 'package:kurumi/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:selection_mode/selection_mode.dart';
@@ -165,9 +166,29 @@ class _DownloadedBadge extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(postDownloadProgressProvider(downloadKey))
+        case final progress?) {
+      final colors = Kurumi.semanticColorsOf(context);
+
+      return Container(
+        width: 24,
+        height: 24,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: colors.overlayDim,
+          borderRadius: const BorderRadius.all(Radius.circular(4)),
+        ),
+        child: CircularProgressIndicator(
+          value: progress > 0 ? progress : null,
+          strokeWidth: 2,
+          color: colors.onOverlayDim,
+        ),
+      );
+    }
+
     return switch (ref.watch(postDownloadStatusProvider(downloadKey))) {
       PostDownloadStatus.downloaded => const ImageOverlayIcon(
-        icon: Symbols.download_done,
+        icon: Symbols.offline_pin,
       ),
       PostDownloadStatus.pending => const ImageOverlayIcon(
         icon: Symbols.downloading,

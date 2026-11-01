@@ -60,12 +60,9 @@ class _DownloadPostButtonState extends ConsumerState<DownloadPostButton> {
 
     final iconColor = IconTheme.of(context).color ?? Colors.white;
     final sources = downloadSources?.getDownloadSources(context, widget.post);
-    final status = ref.watch(
-      postDownloadStatusProvider((
-        siteUrl: ref.watchConfigAuth.url,
-        postId: widget.post.id,
-      )),
-    );
+    final key = (siteUrl: ref.watchConfigAuth.url, postId: widget.post.id);
+    final status = ref.watch(postDownloadStatusProvider(key));
+    final progress = ref.watch(postDownloadProgressProvider(key));
 
     return _PopupMenuButton(
       enable: sources?.isNotEmpty ?? false,
@@ -106,6 +103,7 @@ class _DownloadPostButtonState extends ConsumerState<DownloadPostButton> {
                   sources,
                   iconColor,
                   status,
+                  progress,
                 ),
               )
             : Material(
@@ -121,6 +119,7 @@ class _DownloadPostButtonState extends ConsumerState<DownloadPostButton> {
                       sources,
                       iconColor,
                       status,
+                      progress,
                     ),
                   ),
                 ),
@@ -133,12 +132,20 @@ class _DownloadPostButtonState extends ConsumerState<DownloadPostButton> {
     List<DownloadSource>? sources,
     Color iconColor,
     PostDownloadStatus status,
+    double? progress,
   ) => switch ((sources, status)) {
+    _ when progress != null => _ProgressIcon(
+      progress: progress > 0 ? progress : null,
+      color: iconColor,
+    ),
     (_, PostDownloadStatus.downloaded) => const Icon(
-      Symbols.download_done,
+      Symbols.offline_pin,
       fill: 1,
     ),
-    (_, PostDownloadStatus.pending) => const Icon(Symbols.downloading),
+    (_, PostDownloadStatus.pending) => _ProgressIcon(
+      progress: null,
+      color: iconColor,
+    ),
     (final s?, _) when s.isNotEmpty => CustomPaint(
       size: const Size(24, 24),
       painter: DownloadWithDropdownIconPainter(
@@ -149,6 +156,37 @@ class _DownloadPostButtonState extends ConsumerState<DownloadPostButton> {
       Symbols.download,
     ),
   };
+}
+
+class _ProgressIcon extends StatelessWidget {
+  const _ProgressIcon({
+    required this.progress,
+    required this.color,
+  });
+
+  /// Null while the download waits to start.
+  final double? progress;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.square(
+      dimension: 24,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircularProgressIndicator(
+            value: progress,
+            strokeWidth: 2,
+            color: color,
+            backgroundColor: color.withValues(alpha: 0.2),
+            constraints: const BoxConstraints.tightFor(width: 22, height: 22),
+          ),
+          Icon(Symbols.arrow_downward, size: 14, color: color),
+        ],
+      ),
+    );
+  }
 }
 
 class DownloadWithDropdownIconPainter extends CustomPainter {

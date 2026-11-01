@@ -806,6 +806,9 @@
     },
     "notification": {
       "started": "Download started",
+      "queued": "Added to the download queue",
+      "completed": "Downloaded",
+      "bulk_completed": "Downloads finished",
       "already_downloaded": "Already downloaded",
       "skipped_already_downloaded": "Skipped {count} already downloaded"
     },

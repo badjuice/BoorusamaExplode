@@ -75,6 +75,10 @@ class _DownloadActivityScopeState extends ConsumerState<DownloadActivityScope> {
             );
           }
 
+          if (_feedbackMessage(context, old, activity) case final message?) {
+            showDownloadStartToast(context, message: message);
+          }
+
           if (activity.kind == DownloadActivityKind.single &&
               activity.phase == DownloadActivityPhase.failed) {
             showDownloadErrorToast(
@@ -130,6 +134,31 @@ class _DownloadActivityScopeState extends ConsumerState<DownloadActivityScope> {
       );
 
     return widget.child;
+  }
+
+  /// Queued and finished downloads would otherwise go unnoticed until the
+  /// download manager is opened.
+  String? _feedbackMessage(
+    BuildContext context,
+    DownloadActivity? previous,
+    DownloadActivity activity,
+  ) {
+    final finished =
+        previous != null &&
+        previous.phase != DownloadActivityPhase.completed &&
+        activity.phase == DownloadActivityPhase.completed;
+
+    return switch (activity.kind) {
+      DownloadActivityKind.single
+          when previous == null &&
+              activity.phase == DownloadActivityPhase.queued =>
+        context.t.download.notification.queued,
+      DownloadActivityKind.single when finished =>
+        context.t.download.notification.completed,
+      DownloadActivityKind.bulk when finished =>
+        context.t.download.notification.bulk_completed,
+      _ => null,
+    };
   }
 
   bool _startsSingleDownload(
