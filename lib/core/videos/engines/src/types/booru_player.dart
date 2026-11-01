@@ -39,6 +39,9 @@ abstract class BooruPlayer {
   /// Whether the whole file has been loaded. Engines that can't tell report
   /// true.
   bool get isFullyBuffered;
+
+  /// End of the loaded part of the file, or zero when unknown.
+  Duration get bufferedPosition;
   bool get hasPlayedOnce;
 
   /// Becomes true only after a frame is rendered for the current source.

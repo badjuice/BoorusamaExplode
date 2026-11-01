@@ -4,11 +4,15 @@ import 'package:equatable/equatable.dart';
 class VideoProgress extends Equatable {
   const VideoProgress(
     this.duration,
-    this.position,
-  );
+    this.position, {
+    this.buffered = Duration.zero,
+  });
 
   final Duration duration;
   final Duration position;
+
+  /// How far the player has loaded the file.
+  final Duration buffered;
 
   static const zero = VideoProgress(Duration.zero, Duration.zero);
 
@@ -24,5 +28,5 @@ class VideoProgress extends Equatable {
   );
 
   @override
-  List<Object?> get props => [duration, position];
+  List<Object?> get props => [duration, position, buffered];
 }

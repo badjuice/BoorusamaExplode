@@ -492,6 +492,9 @@ class WebViewBooruPlayer implements BooruPlayer {
   bool get isFullyBuffered => true;
 
   @override
+  Duration get bufferedPosition => Duration.zero;
+
+  @override
   bool get hasPlayedOnce => _hasPlayedOnce;
 
   @override

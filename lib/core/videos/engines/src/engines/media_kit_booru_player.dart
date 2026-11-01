@@ -251,6 +251,10 @@ class MediaKitBooruPlayer implements BooruPlayer {
       _isDisposed || !_isInitialized ? false : _player.state.buffering;
 
   @override
+  Duration get bufferedPosition =>
+      _isDisposed || !_isInitialized ? Duration.zero : _player.state.buffer;
+
+  @override
   bool get isFullyBuffered => switch (_isDisposed || !_isInitialized) {
     true => false,
     false =>

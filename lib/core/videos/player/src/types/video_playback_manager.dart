@@ -79,6 +79,7 @@ class VideoPlaybackManager extends ChangeNotifier {
       final progress = VideoProgress(
         Duration(milliseconds: (total * 1000).toInt()),
         Duration(milliseconds: (current * 1000).toInt()),
+        buffered: currentPlayer.bufferedPosition,
       );
 
       if (progress != _videoProgress.value) {

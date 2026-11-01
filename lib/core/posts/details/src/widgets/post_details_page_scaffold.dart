@@ -21,6 +21,7 @@ import '../../../../premiums/providers.dart';
 import '../../../../router.dart';
 import '../../../../settings/providers.dart';
 import '../../../../videos/lock/widgets.dart';
+import '../../../../widgets/widgets.dart';
 import '../../../details_pageview/widgets.dart';
 import '../../../details_parts/types.dart';
 import '../../../post/routes.dart';
@@ -384,6 +385,19 @@ class _PostDetailPageScaffoldState<T extends Post>
           child: Stack(
             children: [
               child,
+              // The open sheet covers the video controls; keep a thin bar so
+              // the playback position stays visible.
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: MultiValueListenableBuilder2(
+                  first: widget.controller.currentPost,
+                  second: _controller.sheetState,
+                  builder: (_, post, sheetState) =>
+                      post.isVideo && sheetState.isExpanded
+                      ? _MiniVideoProgress(controller: widget.controller)
+                      : const SizedBox.shrink(),
+                ),
+              ),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: ValueListenableBuilder(
@@ -521,6 +535,50 @@ class _PostDetailPageScaffoldState<T extends Post>
               controller: widget.controller,
             )
           : const SizedBox.shrink(),
+    );
+  }
+}
+
+class _MiniVideoProgress extends StatelessWidget {
+  const _MiniVideoProgress({required this.controller});
+
+  final PostDetailsController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Kurumi.themeOf(context).colorScheme;
+
+    return IgnorePointer(
+      child: ValueListenableBuilder(
+        valueListenable: controller.videoProgress,
+        builder: (_, progress, _) {
+          final total = progress.duration.inMilliseconds;
+          double fraction(Duration d) =>
+              total > 0 ? (d.inMilliseconds / total).clamp(0, 1) : 0;
+
+          return SizedBox(
+            height: 2,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ColoredBox(color: Colors.white.withValues(alpha: 0.15)),
+                FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: fraction(progress.buffered),
+                  child: ColoredBox(
+                    color: Colors.white.withValues(alpha: 0.35),
+                  ),
+                ),
+                FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: fraction(progress.position),
+                  child: ColoredBox(color: colorScheme.primary),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

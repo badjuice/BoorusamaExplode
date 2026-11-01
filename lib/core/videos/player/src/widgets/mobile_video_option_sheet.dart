@@ -8,6 +8,9 @@ import 'package:kurumi/material.dart';
 import '../../../../boorus/engine/providers.dart';
 import '../../../../configs/config/providers.dart';
 import '../../../../posts/post/types.dart';
+import '../../../../settings/providers.dart';
+import '../../../engines/providers.dart';
+import '../../../engines/types.dart';
 import '../types/utils.dart';
 import 'mobile_video_option_tile.dart';
 
@@ -41,6 +44,7 @@ class MobileVideoOptionSheet extends ConsumerWidget {
           title: context.t.video_player.playback_speed,
           onTap: onSpeedChanged,
         ),
+        const _EngineTile(),
         ListTile(
           title: Text(context.t.video_player.lock_screen),
           onTap: onLock,
@@ -104,6 +108,66 @@ class PlaybackSpeedActionSheet extends StatelessWidget {
             )
             .toList(),
       ),
+    );
+  }
+}
+
+/// Switches the video engine without leaving the player.
+class _EngineTile extends ConsumerWidget {
+  const _EngineTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final platform = Kurumi.themeOf(context).platform;
+    final current = ref.watch(
+      settingsProvider.select((s) => s.viewer.videoPlayerEngine),
+    );
+    String name(VideoPlayerEngine engine) =>
+        VideoEngineUtils.getUnderlyingEngineName(
+          engine,
+          platform: platform,
+          context: context,
+        );
+
+    return MobileConfigTile(
+      value: name(current),
+      title: context.t.settings.image_viewer.video.video_player_engine,
+      onTap: () {
+        Navigator.of(context).pop();
+        Kurumi.showModalBottomSheet(
+          context: context,
+          builder: (sheetContext) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final engine
+                    in VideoPlayerEngine.getSupportedEnginesForPlatform(
+                      platform,
+                    ))
+                  ListTile(
+                    title: Text(name(engine)),
+                    trailing: engine == current
+                        ? const Icon(Icons.check)
+                        : null,
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      final settings = ref.read(settingsProvider);
+                      ref
+                          .read(settingsNotifierProvider.notifier)
+                          .updateSettings(
+                            settings.copyWith(
+                              viewer: settings.viewer.copyWith(
+                                videoPlayerEngine: engine,
+                              ),
+                            ),
+                          );
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:foundation/foundation.dart';
 import 'package:kurumi/kurumi.dart';
 import 'package:kurumi/material.dart';
+import 'package:video_player/video_player.dart' show DurationRange;
 
 // Project imports:
 import '../../../../videos/player/providers.dart';
@@ -240,7 +241,10 @@ class _VideoControlsContent<T extends Post> extends ConsumerWidget {
           return VideoProgressBar(
             duration: progress.duration,
             position: progress.position,
-            buffered: const [],
+            buffered: [
+              if (progress.buffered > Duration.zero)
+                DurationRange(Duration.zero, progress.buffered),
+            ],
             onDragStart: () {
               controller.pauseVideo(post.id);
             },

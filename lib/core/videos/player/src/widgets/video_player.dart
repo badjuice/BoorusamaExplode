@@ -157,6 +157,15 @@ class _BooruVideoState extends ConsumerState<BooruVideo> {
       _cacheDelayTimer = null;
       _cachingUrl = null;
 
+      // A different engine needs a new player; switching the URL would keep
+      // playing through the old one.
+      if (widget.videoPlayerEngine != oldWidget.videoPlayerEngine) {
+        if (_player case final old?) {
+          _player = null;
+          unawaited(_disposePlayerSafely(old));
+        }
+      }
+
       // Reset disposing flag for new initialization
       _isDisposing = false;
       _error = null;
@@ -542,7 +551,11 @@ class _BooruVideoState extends ConsumerState<BooruVideo> {
             ),
           if (isBuffering)
             _BufferingOverlay(
-              thumbnailUrl: thumbnailUrl,
+              // Once a frame is on screen, keep it instead of jumping back to
+              // the preview image.
+              thumbnailUrl: (player?.firstFrameRendered.value ?? false)
+                  ? null
+                  : thumbnailUrl,
               aspectRatio: aspectRatio,
             ),
         ],
@@ -626,7 +639,9 @@ class _BufferingOverlay extends StatelessWidget {
               ),
             ),
           ColoredBox(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Colors.black.withValues(
+              alpha: thumbnailUrl != null ? 0.3 : 0.15,
+            ),
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
