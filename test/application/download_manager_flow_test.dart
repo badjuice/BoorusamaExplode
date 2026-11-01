@@ -419,24 +419,20 @@ final class _DownloadFlow {
   );
 
   Future<void> selectFilter(DownloadFilter filter) async {
-    final tabBar = find.byType(TabBar);
-    await harness.pumpUntilFound(tester, tabBar);
-    final label = filter.localize(tester.element(tabBar));
-    final tab = find.descendant(of: tabBar, matching: find.text(label));
+    final pageFinder = find.byType(DownloadManagerPage);
+    await harness.pumpUntilFound(tester, pageFinder);
+    final label = filter.localize(tester.element(pageFinder));
+    // The first match is the tab; the tab view may repeat the label below.
+    final tab = find
+        .descendant(of: pageFinder, matching: find.text(label))
+        .first;
 
-    await tester.scrollUntilVisible(
-      tab.hitTestable(),
-      150,
-      scrollable: find
-          .descendant(of: tabBar, matching: find.byType(Scrollable))
-          .first,
-    );
-    await tester.tap(tab.hitTestable());
+    await tester.ensureVisible(tab);
+    await tester.pump();
+    await tester.tap(tab);
 
-    final page = tester.widget<DownloadManagerPage>(
-      find.byType(DownloadManagerPage),
-    );
-    final container = ProviderScope.containerOf(tester.element(tabBar));
+    final page = tester.widget<DownloadManagerPage>(pageFinder);
+    final container = ProviderScope.containerOf(tester.element(pageFinder));
     await harness.pumpUntil(
       tester,
       () => container.read(downloadFilterProvider(page.filter)) == filter,

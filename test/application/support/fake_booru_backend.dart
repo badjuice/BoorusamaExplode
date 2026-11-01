@@ -267,9 +267,11 @@ final class FakeBooruBackend {
     final effectiveSettings =
         settings?.copyWith(
           currentBooruConfigId: effectiveInitialConfig.id,
+          downloadPathPrompted: true,
         ) ??
         Settings.defaultSettings.copyWith(
           currentBooruConfigId: effectiveInitialConfig.id,
+          downloadPathPrompted: true,
         );
 
     return createTestBoorusamaRuntime(

@@ -23,7 +23,8 @@ final class ApplicationTestStore {
     Settings? settings,
     Iterable<BooruConfig> configs = const [],
   }) : settingsRepository = MemorySettingsRepository(
-         settings ?? Settings.defaultSettings,
+         settings ??
+             Settings.defaultSettings.copyWith(downloadPathPrompted: true),
        ),
        booruConfigRepository = MemoryBooruConfigRepository(configs: configs);
 
@@ -36,6 +37,7 @@ final class ApplicationTestStore {
     final configs = [initial, ...additional];
     return ApplicationTestStore(
       settings: Settings.defaultSettings.copyWith(
+        downloadPathPrompted: true,
         currentBooruConfigId: initial.id,
         booruConfigIdOrders: configs.map((config) => config.id).join(' '),
       ),

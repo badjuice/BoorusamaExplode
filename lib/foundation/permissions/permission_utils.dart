@@ -37,11 +37,22 @@ Future<PermissionStatus> checkMediaPermissions(
 
 /// Android 11+ only lets apps write outside the shared folders with
 /// "All files access".
-Future<bool> hasAllFilesAccess() => Permission.manageExternalStorage.isGranted;
+Future<bool> hasAllFilesAccess() async {
+  try {
+    return await Permission.manageExternalStorage.isGranted;
+  } catch (_) {
+    return false;
+  }
+}
 
 /// Opens the system screen for "All files access".
-Future<bool> requestAllFilesAccess() async =>
-    (await Permission.manageExternalStorage.request()).isGranted;
+Future<bool> requestAllFilesAccess() async {
+  try {
+    return (await Permission.manageExternalStorage.request()).isGranted;
+  } catch (_) {
+    return false;
+  }
+}
 
 Future<PermissionStatus> _requestMediaPermissionsAndroid(
   AndroidApiLevel? androidVersion,

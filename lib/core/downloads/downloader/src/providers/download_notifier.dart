@@ -19,6 +19,7 @@ import '../../../../download_activity/activity.dart';
 import '../../../../http/client/types.dart';
 import '../../../../posts/post/providers.dart';
 import '../../../../posts/post/types.dart';
+import '../../../../app.dart' show toastDurationProvider;
 import '../../../../router.dart';
 import '../../../../settings/types.dart';
 import '../../../filename/types.dart';
@@ -465,7 +466,12 @@ void showDownloadStartToast(BuildContext context, {String? message}) {
       horizontal: 8,
       vertical: 4,
     ),
-    duration: const Duration(seconds: 2),
+    duration:
+        ProviderScope.containerOf(
+          context,
+          listen: false,
+        ).read(toastDurationProvider) ??
+        const Duration(seconds: 2),
     backgroundColor: colorScheme.surfaceContainerHigh,
     textStyle: TextStyle(
       color: colorScheme.onSurfaceVariant,
