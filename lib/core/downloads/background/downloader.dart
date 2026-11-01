@@ -11,6 +11,7 @@ import 'package:path/path.dart';
 // Project imports:
 import '../../../foundation/filesystem.dart';
 import '../../../foundation/loggers.dart';
+import '../../../foundation/permissions.dart';
 import '../../ddos/solver/types.dart';
 import '../downloader/types.dart';
 import '../path/types.dart';
@@ -37,6 +38,12 @@ class BackgroundDownloader implements DownloadService {
   @override
   Future<DownloadResult> download(DownloadOptions options) async {
     final pathInfo = PathInfo.from(options.path);
+    final allFilesAccess = switch (pathInfo) {
+      final AndroidPathInfo info
+          when info.requiresPublicDirectory(androidSdkInt) =>
+        await hasAllFilesAccess(),
+      _ => false,
+    };
 
     final (targetDir, baseDirectory, error) = switch (pathInfo) {
       // Valid Android paths with public directory
@@ -48,7 +55,8 @@ class BackgroundDownloader implements DownloadService {
 
       // Android paths without public directory - check scoped storage
       final AndroidPathInfo pathInfo
-          when pathInfo.requiresPublicDirectory(androidSdkInt) =>
+          when pathInfo.requiresPublicDirectory(androidSdkInt) &&
+              !allFilesAccess =>
         (
           null,
           BaseDirectory.root,

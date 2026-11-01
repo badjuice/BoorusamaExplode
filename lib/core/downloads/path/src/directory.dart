@@ -1,5 +1,11 @@
 // Project imports:
 import '../../../../foundation/filesystem.dart';
+import '../../../../foundation/platform.dart';
+
+/// Shared folders need no storage permission on Android 10 and later, and
+/// gallery apps list this one as an album.
+const kDefaultAndroidDownloadPath =
+    '/storage/emulated/0/Pictures/BoorusamaExplode';
 
 sealed class DownloadDirectoryResult {
   const DownloadDirectoryResult();
@@ -20,6 +26,17 @@ final class DownloadDirectoryFailure extends DownloadDirectoryResult {
 Future<DownloadDirectoryResult> tryGetDownloadDirectory(
   AppFileSystem fs,
 ) async {
+  if (isAndroid()) {
+    try {
+      if (!fs.directoryExistsSync(kDefaultAndroidDownloadPath)) {
+        await fs.createDirectory(kDefaultAndroidDownloadPath, recursive: true);
+      }
+      return const DownloadDirectorySuccess(kDefaultAndroidDownloadPath);
+    } catch (_) {
+      // Fall back to the system download folder below.
+    }
+  }
+
   final path = await fs.getDownloadPath();
   if (path == null) {
     return const DownloadDirectoryFailure('Download directory not available');

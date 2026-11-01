@@ -791,6 +791,16 @@
       "setting": "Downloads gallery",
       "setting_description": "Browse downloaded files from the Downloads page"
     },
+    "location": {
+      "title": "Where should downloads go?",
+      "default_description": "Files are saved to {path}. Gallery apps show it as an album, and no storage permission is needed.",
+      "use_default": "Use this folder",
+      "choose": "Choose folder",
+      "all_files_title": "Allow access to this folder",
+      "all_files_description": "{path} is outside the shared folders (Download, Pictures, Documents). Android only lets the app save there with \"All files access\". The next screen opens that setting.",
+      "all_files_continue": "Continue",
+      "all_files_denied": "Can't save to {path} without All files access. Pick a folder inside Download, Pictures or Documents, or allow access."
+    },
     "notification": {
       "started": "Download started",
       "already_downloaded": "Already downloaded",

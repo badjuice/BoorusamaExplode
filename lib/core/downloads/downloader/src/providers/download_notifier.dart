@@ -32,6 +32,7 @@ import '../types/download.dart';
 import '../types/download_network_policy.dart';
 import '../types/metadata.dart';
 import '../types/observer.dart';
+import 'download_location.dart';
 import 'download_network_policy_provider.dart';
 
 final downloadNotifierProvider =
@@ -61,6 +62,11 @@ class DownloadNotifier extends FamilyNotifier<void, DownloadNotifierParams> {
     return;
   }
 
+  String? get _profileLocation => switch (arg.download.location) {
+    final String l when l.isNotEmpty => l,
+    _ => null,
+  };
+
   Future<PermissionStatus?> _getPermissionStatus() async {
     final perm = await ref.read(deviceStoragePermissionProvider.future);
     return ref.read(appPlatformProvider).isMobile
@@ -82,6 +88,12 @@ class DownloadNotifier extends FamilyNotifier<void, DownloadNotifierParams> {
       return null;
     }
 
+    final location = await resolveDownloadLocation(
+      ref,
+      requestedPath: _profileLocation,
+    );
+    if (location == null) return null;
+
     final perm = await _getPermissionStatus();
     final observer = arg.observer;
 
@@ -90,6 +102,7 @@ class DownloadNotifier extends FamilyNotifier<void, DownloadNotifierParams> {
       post,
       params: arg,
       permission: perm,
+      downloadPath: location.isEmpty ? null : location,
       overrideUrl: overrideUrl,
       quality: quality,
       onStarted: () {
@@ -133,6 +146,12 @@ class DownloadNotifier extends FamilyNotifier<void, DownloadNotifierParams> {
     }
     if (newPosts.isEmpty) return;
 
+    final location = await resolveDownloadLocation(
+      ref,
+      requestedPath: downloadPath ?? _profileLocation,
+    );
+    if (location == null) return;
+
     final perm = await _getPermissionStatus();
     final networkConstraint = await resolveDownloadNetworkConstraint(
       ref,
@@ -152,7 +171,7 @@ class DownloadNotifier extends FamilyNotifier<void, DownloadNotifierParams> {
         params: arg,
         permission: perm,
         group: group,
-        downloadPath: downloadPath,
+        downloadPath: location.isEmpty ? null : location,
         bulkMetadata: {
           'total': newPosts.length.toString(),
           'index': i.toString(),

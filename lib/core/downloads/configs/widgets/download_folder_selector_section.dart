@@ -1,3 +1,6 @@
+// Dart imports:
+import 'dart:async';
+
 // Package imports:
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:i18n/i18n.dart';
@@ -8,7 +11,10 @@ import 'package:material_symbols_icons/symbols.dart';
 // Project imports:
 import '../../../../foundation/html.dart';
 import '../../../../foundation/info/device_info.dart';
+import '../../../../foundation/permissions.dart';
 import '../../../../foundation/picker.dart';
+import '../../../../foundation/platform.dart';
+import '../../downloader/src/providers/download_location.dart';
 import '../../path/types.dart';
 
 class DownloadFolderSelectorSection extends ConsumerStatefulWidget {
@@ -38,6 +44,19 @@ class DownloadFolderSelectorSection extends ConsumerStatefulWidget {
 class _DownloadFolderSelectorSectionState
     extends ConsumerState<DownloadFolderSelectorSection> {
   late String? storagePath = widget.storagePath;
+  var _allFilesAccess = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_refreshAccess());
+  }
+
+  Future<void> _refreshAccess() async {
+    if (!isAndroid()) return;
+    final granted = await hasAllFilesAccess();
+    if (mounted) setState(() => _allFilesAccess = granted);
+  }
 
   @override
   void didUpdateWidget(covariant DownloadFolderSelectorSection oldWidget) {
@@ -53,9 +72,11 @@ class _DownloadFolderSelectorSectionState
   bool _shouldDisplayWarning() {
     return switch (PathInfo.from(storagePath)) {
       InvalidPath() => true,
-      final AndroidPathInfo info => info.requiresPublicDirectory(
-        widget.deviceInfo.androidDeviceInfo?.version.sdkInt,
-      ),
+      final AndroidPathInfo info =>
+        !_allFilesAccess &&
+            info.requiresPublicDirectory(
+              widget.deviceInfo.androidDeviceInfo?.version.sdkInt,
+            ),
       _ => false,
     };
   }
@@ -96,7 +117,13 @@ class _DownloadFolderSelectorSectionState
                           )
                         : Text(
                             widget.hint ??
-                                context.t.settings.download.select_a_folder,
+                                (isAndroid()
+                                    ? kDefaultAndroidDownloadPath
+                                    : context
+                                          .t
+                                          .settings
+                                          .download
+                                          .select_a_folder),
                             overflow: TextOverflow.fade,
                             style: Kurumi.themeOf(context).textTheme.titleMedium
                                 ?.copyWith(
@@ -141,8 +168,20 @@ class _DownloadFolderSelectorSectionState
   Future<void> _pickFolder() => pickDirectoryPathToastOnError(
     context: context,
     picker: ref.read(appFilePickerProvider),
-    onPick: (path) => widget.onPathChanged(path),
+    onPick: (path) {
+      widget.onPathChanged(path);
+      unawaited(_checkAccess(path));
+    },
   );
+
+  Future<void> _checkAccess(String path) async {
+    await ensureDownloadFolderAccess(
+      context,
+      path,
+      sdkInt: widget.deviceInfo.androidDeviceInfo?.version.sdkInt,
+    );
+    await _refreshAccess();
+  }
 }
 
 class DownloadPathWarning extends StatelessWidget {
