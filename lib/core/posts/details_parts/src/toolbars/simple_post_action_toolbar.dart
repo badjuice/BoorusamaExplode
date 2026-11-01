@@ -81,6 +81,8 @@ class SimplePostActionToolbar extends ConsumerWidget {
             if (commentPageBuilder != null)
               ButtonData(
                 widget: CommentPostButton(
+                  postId: post.id,
+                  auth: auth,
                   onPressed: () => goToCommentPage(context, ref, post),
                 ),
                 title: context.t.comment.comments,
