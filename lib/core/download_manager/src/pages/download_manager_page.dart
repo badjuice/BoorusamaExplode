@@ -15,9 +15,7 @@ import 'package:share_plus/share_plus.dart';
 // Project imports:
 import '../../../configs/config/providers.dart';
 import '../../../configs/config/types.dart';
-import '../../../ddos/handler/providers.dart';
 import '../../../downloads/background/types.dart';
-import '../../../http/client/providers.dart';
 import '../../../downloads/history/widgets.dart';
 import '../../../settings/providers.dart';
 import '../../../settings/routes.dart';
@@ -101,6 +99,23 @@ class _DownloadManagerPageState extends ConsumerState<DownloadManagerPage>
     notifier.state = filter;
   }
 
+  void _clearWhere(String group, bool Function(TaskUpdate) test) {
+    final removed = ref
+        .read(downloadTaskUpdatesProvider.notifier)
+        .removeWhere(group, test);
+
+    if (removed.isEmpty) {
+      Kurumi.showSimpleSnackBar(
+        context: context,
+        content: Text(context.t.download.nothing_to_clear),
+        duration: const Duration(seconds: 1),
+      );
+      return;
+    }
+
+    unawaited(FileDownloader().database.deleteRecordsWithIds(removed));
+  }
+
   @override
   void dispose() {
     _tabController
@@ -156,6 +171,35 @@ class _DownloadManagerPageState extends ConsumerState<DownloadManagerPage>
                     onTap: () {
                       _selectionModeController.enable();
                     },
+                  ),
+                  KurumiPopupMenuItem(
+                    title: Text(context.t.download.retry_all_failed),
+                    onTap: () => retryDownloadTasks(
+                      ref,
+                      ref
+                          .read(downloadTaskUpdatesProvider)
+                          .all(group)
+                          .whereType<TaskStatusUpdate>()
+                          .where((e) => _isUnsuccessful(e.status))
+                          .map((e) => e.task),
+                      auth: config.auth,
+                    ),
+                  ),
+                  KurumiPopupMenuItem(
+                    title: Text(context.t.download.clear_completed),
+                    onTap: () => _clearWhere(
+                      group,
+                      (u) =>
+                          u is TaskStatusUpdate &&
+                          u.status == TaskStatus.complete,
+                    ),
+                  ),
+                  KurumiPopupMenuItem(
+                    title: Text(context.t.download.clear_failed),
+                    onTap: () => _clearWhere(
+                      group,
+                      (u) => u is TaskStatusUpdate && _isUnsuccessful(u.status),
+                    ),
                   ),
                   KurumiPopupMenuItem(
                     title: Text(context.t.generic.action.clear),
@@ -330,24 +374,11 @@ class _DownloadManagerPageState extends ConsumerState<DownloadManagerPage>
 
               ref.read(downloadTaskClientProvider).resume(dt);
             },
-            onRestart: () {
-              ref.invalidate(bypassDdosHeadersProvider(task.task.url));
-              WidgetsBinding.instance.addPostFrameCallback(
-                (_) async {
-                  final headers = ref.read(httpHeadersProvider(config.auth));
-                  final bypassHeaders = await ref.read(
-                    bypassDdosHeadersProvider(task.task.url).future,
-                  );
-                  await ref
-                      .read(downloadTaskClientProvider)
-                      .retry(
-                        task.task,
-                        headers: headers,
-                        bypassHeaders: bypassHeaders,
-                      );
-                },
-              );
-            },
+            onRestart: () => retryDownloadTasks(
+              ref,
+              [task.task],
+              auth: config.auth,
+            ),
             onCancel: () {
               ref.read(downloadTaskClientProvider).cancel(task.task.taskId);
             },
@@ -428,3 +459,8 @@ class _CountPill extends StatelessWidget {
     );
   }
 }
+
+bool _isUnsuccessful(TaskStatus status) => switch (status) {
+  TaskStatus.failed || TaskStatus.notFound || TaskStatus.canceled => true,
+  _ => false,
+};

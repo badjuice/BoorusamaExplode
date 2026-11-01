@@ -119,6 +119,23 @@ class DownloadTaskUpdatesNotifier extends Notifier<DownloadTaskUpdateState> {
     state = DownloadTaskUpdateState(tasks: tasks);
   }
 
+  /// Removes the matching updates of [group] and returns their task ids.
+  List<String> removeWhere(String group, bool Function(TaskUpdate) test) {
+    final updates = [...?state.tasks[group]];
+    final removed = [
+      for (final u in updates)
+        if (test(u)) u.task.taskId,
+    ];
+    if (removed.isEmpty) return removed;
+
+    state = state.updateWith(group, [
+      for (final u in updates)
+        if (!test(u)) u,
+    ]);
+
+    return removed;
+  }
+
   void addOrUpdate(TaskUpdate update) {
     final totalTasks = state.tasks;
     final group = update.task.group;

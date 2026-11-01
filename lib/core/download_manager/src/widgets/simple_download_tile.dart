@@ -130,8 +130,13 @@ class SimpleDownloadTile extends ConsumerWidget {
               color: Colors.green,
             ),
             TaskStatus.enqueued => const SizedBox.shrink(),
-            TaskStatus.notFound => const SizedBox.shrink(),
-            TaskStatus.canceled => const SizedBox.shrink(),
+            TaskStatus.notFound || TaskStatus.canceled => IconButton(
+              onPressed: () => onRestart.call(),
+              icon: const Icon(
+                Symbols.refresh,
+                fill: 1,
+              ),
+            ),
             TaskStatus.waitingToRetry => const Center(
               child: CircularProgressIndicator(),
             ),

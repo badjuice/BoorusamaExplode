@@ -37,35 +37,43 @@ class RetryAllFailedButton extends ConsumerWidget {
         ? Padding(
             padding: const EdgeInsets.all(12),
             child: FilledButton(
-              onPressed: () {
-                for (final task in failed) {
-                  final dt = castOrNull<DownloadTask>(task.task);
-
-                  if (dt == null) continue;
-                  ref.invalidate(bypassDdosHeadersProvider(dt.url));
-                  WidgetsBinding.instance.addPostFrameCallback(
-                    (_) async {
-                      final headers = ref.read(
-                        httpHeadersProvider(config.auth),
-                      );
-
-                      final bypassHeaders = await ref.read(
-                        bypassDdosHeadersProvider(dt.url).future,
-                      );
-                      await ref
-                          .read(downloadTaskClientProvider)
-                          .retry(
-                            dt,
-                            headers: headers,
-                            bypassHeaders: bypassHeaders,
-                          );
-                    },
-                  );
-                }
-              },
+              onPressed: () => retryDownloadTasks(
+                ref,
+                failed.map((e) => e.task),
+                auth: config.auth,
+              ),
               child: Text(context.t.download.retry_all),
             ),
           )
         : const SizedBox.shrink();
+  }
+}
+
+/// Starts [tasks] again with fresh request and protection headers.
+void retryDownloadTasks(
+  WidgetRef ref,
+  Iterable<Task> tasks, {
+  required BooruConfigAuth auth,
+}) {
+  for (final task in tasks) {
+    final dt = castOrNull<DownloadTask>(task);
+    if (dt == null) continue;
+
+    ref.invalidate(bypassDdosHeadersProvider(dt.url));
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) async {
+        final headers = ref.read(httpHeadersProvider(auth));
+        final bypassHeaders = await ref.read(
+          bypassDdosHeadersProvider(dt.url).future,
+        );
+        await ref
+            .read(downloadTaskClientProvider)
+            .retry(
+              dt,
+              headers: headers,
+              bypassHeaders: bypassHeaders,
+            );
+      },
+    );
   }
 }
