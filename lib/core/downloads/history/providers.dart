@@ -70,7 +70,10 @@ class DownloadHistoryNotifier extends AsyncNotifier<DownloadHistoryState> {
     await repo.remove(key);
 
     state = AsyncData(
-      current.copyWith(downloaded: {...current.downloaded}..remove(key)),
+      current.copyWith(
+        downloaded: {...current.downloaded}..remove(key),
+        pending: {...current.pending}..remove(key),
+      ),
     );
   }
 }
