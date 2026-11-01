@@ -41,6 +41,7 @@ class ErrorText extends ConsumerWidget {
     this.message,
     this.style,
     this.textAlign = TextAlign.center,
+    this.onRetry,
   });
 
   final Object error;
@@ -50,6 +51,9 @@ class ErrorText extends ConsumerWidget {
   final String? message;
   final TextStyle? style;
   final TextAlign textAlign;
+
+  /// Shows a reload button under the message.
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -64,6 +68,14 @@ class ErrorText extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(summary, style: style, textAlign: textAlign),
+        if (onRetry case final retry?) ...[
+          const SizedBox(height: 12),
+          FilledButton.tonalIcon(
+            onPressed: retry,
+            icon: const Icon(Icons.refresh),
+            label: Text(context.t.generic.action.retry),
+          ),
+        ],
         if (showDetails) ...[
           const SizedBox(height: 8),
           ConstrainedBox(

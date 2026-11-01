@@ -67,7 +67,11 @@ class DownloadsGalleryPage extends ConsumerWidget {
           ),
         ),
         AsyncError(:final error, :final stackTrace) => Center(
-          child: ErrorText(error: error, stackTrace: stackTrace),
+          child: ErrorText(
+            error: error,
+            stackTrace: stackTrace,
+            onRetry: () => ref.invalidate(downloadedPostsProvider),
+          ),
         ),
         _ => const Center(child: CircularProgressIndicator()),
       },

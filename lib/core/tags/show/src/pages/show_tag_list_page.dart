@@ -123,6 +123,7 @@ class _ShowTagListPageState extends ConsumerState<ShowTagListPage> {
                   error: error,
                   stackTrace: stack,
                   style: textTheme.bodyLarge,
+                  onRetry: () => ref.invalidate(showTagsProvider(params)),
                 ),
               ),
             ),

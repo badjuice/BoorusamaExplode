@@ -181,7 +181,13 @@ class _CommentThreadPageScaffoldState<T>
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: ErrorText(error: error),
+          child: ErrorText(
+            error: error,
+            onRetry: switch (widget.onRefresh) {
+              final refresh? => () => refresh(),
+              null => null,
+            },
+          ),
         ),
       );
     }
