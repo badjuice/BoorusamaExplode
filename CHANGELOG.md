@@ -1,4 +1,4 @@
-# 0.1.1
+# 0.3.0
 - [Realbooru] Tags are colored and grouped again, show post counts, and open a search when tapped
 - Videos play while they load; the video cache no longer downloads the same file in parallel
 - The download manager shows queued, running and finished downloads correctly
@@ -7,7 +7,7 @@
 - Settings link to this fork's repository, issues and email
 
 # 0.1.0
-- First release of the BoorusamaExplode fork, based on Boorusama 4.6.1
+- First release of the BoorusamaExplode fork, based on Boorusama 4.6.1. It shipped two rounds of work at once, the realbooru and download fixes (0.1) and the features below (0.2), so the next release is 0.3.0
 - [Realbooru] Comments, tag counts, swiping between posts, video and GIF badges
 - Bulk downloads resolve the real file URL, skip duplicates and keep a history
 - Optional download folders per site, search and media type, and a gallery of downloads
